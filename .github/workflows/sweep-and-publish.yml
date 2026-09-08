@@ -32,14 +32,12 @@ jobs:
         run: echo "${{ github.token }}" | gh auth login --with-token
 
       - name: Sweep sources & build site
-        run: |
-          cd radar
-          node build-site.mjs feed.json site
+        run: node build-site.mjs feed.json site
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: radar/site
+          path: site
 
   deploy:
     needs: build
