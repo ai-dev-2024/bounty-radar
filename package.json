@@ -1,0 +1,15 @@
+{
+  "name": "bounty-radar",
+  "version": "1.0.0",
+  "description": "Daily sweep of real, live, payable open-source bounties across Algora, Opire and GitHub labels — with repo-liveness verification and spam filtering.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "radar": "node radar.mjs",
+    "radar:json": "node radar.mjs --json",
+    "radar:digest": "node radar.mjs --out digest.md"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

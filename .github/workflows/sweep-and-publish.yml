@@ -1,0 +1,52 @@
+name: sweep-and-publish
+
+# Daily sweep of bounty/job/challenge sources, published to GitHub Pages.
+# Also runs on demand via the "Run workflow" button.
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # 06:00 UTC daily
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # gh CLI is preinstalled on ubuntu runners; auth via the built-in token.
+      - name: Configure gh auth
+        run: echo "${{ github.token }}" | gh auth login --with-token
+
+      - name: Sweep sources & build site
+        run: |
+          cd radar
+          node build-site.mjs feed.json site
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: radar/site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
