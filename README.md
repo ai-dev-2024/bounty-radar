@@ -18,8 +18,8 @@ A daily-verified feed of real, payable open-source work — bounties, jobs, chal
 | Surface | URL | For |
 |---|---|---|
 | Browse board | [/](https://ai-dev-2024.github.io/bounty-radar/) | humans — verified listings, escrow badges, filters, 60-second walkthrough |
-| HN momentum chart | [top of the board](https://ai-dev-2024.github.io/bounty-radar/) | launch day — points, comments **and repo stars** over time, rendered on the page; standalone shareable `momentum.svg` + `momentum.png` (CI artifact) |
-| Launch dashboard | [/dashboard.svg](https://ai-dev-2024.github.io/bounty-radar/dashboard.svg) | one shareable image, three panels: HN points, repo stars, API traffic/day (`dashboard.png` in CI artifacts) |
+| HN momentum chart | [top of the board](https://ai-dev-2024.github.io/bounty-radar/) · [momentum.png](https://raw.githubusercontent.com/ai-dev-2024/bounty-radar/gh-artifacts/momentum.png) | launch day — points, comments **and repo stars** over time, rendered on the page; standalone `momentum.svg` on Pages + login-free PNG on the `gh-artifacts` branch |
+| Launch dashboard | [/dashboard.svg](https://ai-dev-2024.github.io/bounty-radar/dashboard.svg) · [dashboard.png](https://raw.githubusercontent.com/ai-dev-2024/bounty-radar/gh-artifacts/dashboard.png) | one shareable image, three panels: HN points, repo stars, API traffic/day — login-free raw URLs, no GitHub session needed |
 | Hourly launch digest | Discord | launch day — pts/comments/stars/API-reqs with hourly deltas, every hour while the thread is <36h old, then silent |
 | RSS | [/feed.xml](https://ai-dev-2024.github.io/bounty-radar/feed.xml) | subscribe, new listings push to you |
 | JSON feed | [/bounties.json](https://ai-dev-2024.github.io/bounty-radar/bounties.json) | agents — poll it, act on it |
