@@ -33,6 +33,8 @@ jobs:
 
       - name: Sweep sources & build site
         run: node build-site.mjs feed.json site
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - name: Fire alerts for new high-score listings
         env:
@@ -46,16 +48,17 @@ jobs:
             echo "No webhook secrets configured — skipping alerts."
           fi
 
-      - name: Commit alert state (dedup across runs)
+      - name: Commit tracking state (alert dedup + first_seen map)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add state/alerts-state.json
+          git add state/alerts-state.json state/listings-seen.json
           if ! git diff --cached --quiet; then
-            git commit -m "chore: update alert state"
+            git commit -m "chore: update tracking state"
+            git pull --rebase origin main
             git push
           else
-            echo "No alert-state changes to commit."
+            echo "No tracking-state changes to commit."
           fi
 
       - name: Upload Pages artifact
