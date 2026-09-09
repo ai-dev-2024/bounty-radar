@@ -55,7 +55,7 @@ const hasGh = await gh(["auth", "status"]).then(() => true).catch(() => false);
 let kit = { count: null, stars: null, raw: null };
 try {
   const md = readFileSync(KIT_PATH, "utf8");
-  kit.count = Number(md.match(/shows (\d+) listings/)?.[1]) || null;
+  kit.count = Number(md.match(/board (?:has|shows) (\d+) listings/)?.[1]) || null;
   kit.stars = Number(md.match(/\((\d+(?:\.\d+)?)k stars\)/)?.[1]) || null;
   kit.raw = md.match(/(\d+) verified out of (\d+) raw/)?.[2] ?? null;
 } catch { /* kit missing → count parity check reports it */ }

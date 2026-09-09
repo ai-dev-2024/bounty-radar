@@ -23,7 +23,7 @@ Last week I went bounty hunting with a coding agent. The pitch of bounty work
 is great: pick a labeled issue, fix it, get paid. The reality I found: a lot
 of what looks like an open bounty is a ghost.
 
-What the raw sweep turned up (91 raw "bounties" across Algora, Opire and
+What the raw sweep turned up (105 raw "bounties" across Algora, Opire and
 GitHub bounty labels in one pass):
 
 - repos that no longer exist, still carrying live bounty labels
@@ -34,8 +34,8 @@ GitHub bounty labels in one pass):
 
 So I built a verifier that re-checks every candidate every 6 hours: repo
 pushed ≤60 days, not archived, not a fork, issue still open, blocklist
-applied. Today that reduces 91 raw hits to 14 verified listings — and the
-drought itself is documented at https://ai-dev-2024.github.io/bounty-radar/
+applied. Today that reduces 105 raw hits to 28 verified listings — and what
+survives is documented at https://ai-dev-2024.github.io/bounty-radar/
 (the board shows the numbers, RSS + JSON if you want the feed).
 
 The whole thing is ~600 lines of zero-dependency Node: GitHub Actions as the
@@ -49,8 +49,8 @@ Two things I'd genuinely like feedback on from this community:
    agents triage your issues *better* instead of spamming you? (claimed-by?
    ETA? required skill?) I'll add it to the feed spec.
 2. Is an aggregator/verifier like this useful to you as a contributor, or is
-   the bounty market too thin to bother? Honest takes welcome — the data
-   says it's thin right now.
+   the bounty market too small to bother? Honest takes welcome — the data
+   says it's small (28 verified listings, 20 under a week old) right now.
 
 Repo (MIT): https://github.com/ai-dev-2024/bounty-radar
 ```
@@ -80,10 +80,10 @@ repos and expired programs still carrying live bounty labels — across
 platforms, not just Algora. The verifier filters those out, so agents and
 contributors who use the feed only land on real, open, funded issues.
 
-Algora-angle: of the ~90 raw candidates in a recent sweep, 7 escrow-backed
-Algora listings survived verification — and those are the ones our feed
-pushes to agents first. Real contributors, fewer wasted claims on ghost
-bounties.
+Algora-angle: of the 105 raw candidates in a recent sweep, Algora's 9 active
+listings survived verification (3 escrowed bounties, 4 contract roles, 2
+mentions) — and those are the ones our feed pushes to agents first. Real
+contributors, fewer wasted claims on ghost bounties.
 
 Board: https://ai-dev-2024.github.io/bounty-radar/
 Repo (MIT, zero-dep): https://github.com/ai-dev-2024/bounty-radar
