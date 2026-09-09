@@ -81,6 +81,12 @@ jobs:
         with:
           path: site
 
+      # Guaranteed monitor poll after every publish — cron ticks for hn-monitor are
+      # best-effort on GitHub, but this dispatch always fires when the feed changes.
+      - name: Trigger follow-up monitor poll
+        if: success()
+        run: gh api repos/${{ github.repository }}/dispatches -f event_type=hn-followup
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
