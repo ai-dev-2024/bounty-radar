@@ -68,8 +68,10 @@ Or skip MCP: `fetch("https://ai-dev-2024.github.io/bounty-radar/bounties.json")`
 every 6h (GitHub Actions cron, free):
   radar.mjs sweeps 6 sources ──► verifies (repo ≤60d pushed · issue open · not fork · spam-filtered)
                              ──► build-site.mjs writes HTML + RSS + JSON
+                             ──► build-dashboard.mjs renders the 3-panel launch dashboard (when live)
                              ──► GitHub Pages deploys
                              ──► notify.mjs pings Discord/Telegram on new score-≥6 listings
+                             ──► dispatches hn-monitor (thread + PR watch) and the hourly launch digest
 ```
 
 No backend, no database, no hosting bill. GitHub Pages + Actions are the entire infrastructure.
@@ -101,13 +103,19 @@ Node 20+, `gh` authed. Zero npm dependencies.
 | File | Role |
 |---|---|
 | `radar.mjs` | sweep + verify + score (0–15) |
-| `build-site.mjs` | HTML/RSS/JSON generator |
+| `build-site.mjs` | HTML/RSS/JSON generator + momentum chart |
+| `build-dashboard.mjs` | 3-panel launch dashboard SVG (HN, stars, API traffic) |
+| `render-chart.mjs` | SVG → shareable PNG (CI only) |
 | `mcp-server.mjs` | MCP tools over stdio |
-| `hn-monitor.mjs` | HN thread + PR watch; logs points-over-time samples to state |
+| `hn-monitor.mjs` | HN thread + PR watch; momentum samples to state |
+| `launch-digest.mjs` | hourly launch-day Discord digest with deltas |
 | `notify.mjs` | Discord/Telegram alerts w/ dedup |
-| `.github/workflows/sweep-and-publish.yml` | the whole pipeline on cron |
+| `preflight.mjs` | GO/NO-GO launch verification (`npm run preflight`) |
+| `.github/workflows/sweep-and-publish.yml` | the 6h pipeline on cron |
+| `.github/workflows/hn-monitor.yml` | 10-min thread/PR watch |
+| `.github/workflows/launch-digest.yml` | hourly digest |
 | `docs/API_PLAN.md` | product plan for the API stage |
-| `docs/SHOW_HN.md` · `docs/HN_REPLIES.md` | launch kit + fast reply templates |
+| `docs/SHOW_HN.md` · `docs/HN_REPLIES.md` · `docs/CROSS_POST.md` | launch kit, replies, cross-posts |
 
 ## Show HN launch
 
