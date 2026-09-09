@@ -39,17 +39,26 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           HN_ITEM_ID: ${{ vars.HN_ITEM_ID }} # set after Show HN submission → footer link appears automatically
 
-      # Shareable chart: momentum.svg → PNG (2x density) for the HN first comment
-      # and social posts. Best-effort — a sharp install hiccup never blocks publish.
-      - name: Render momentum.png
+      # Three-panel launch dashboard (HN points + stars + API traffic) as one
+      # shareable SVG. Exits 0 with no output pre-launch — never blocks publish.
+      - name: Build launch dashboard
+        run: node build-dashboard.mjs site/dashboard.svg
+        env:
+          HN_ITEM_ID: ${{ vars.HN_ITEM_ID }}
+
+      # Shareable charts: SVGs → PNG (2x density) for the HN first comment and
+      # social posts. Best-effort — a sharp install hiccup never blocks publish.
+      - name: Render shareable PNGs
         run: |
-          if [ -f site/momentum.svg ]; then
-            npm install --no-save --no-fund --no-audit sharp@0.105.0 >/dev/null 2>&1 \
-              && node render-chart.mjs site/momentum.svg site/momentum.png \
-              || echo "::warning::momentum.png render skipped (sharp install/render failed)"
-          else
-            echo "No momentum.svg yet (chart appears once the HN thread exists)."
-          fi
+          npm install --no-save --no-fund --no-audit sharp@0.105.0 >/dev/null 2>&1 || true
+          for f in momentum dashboard; do
+            if [ -f "site/$f.svg" ]; then
+              node render-chart.mjs "site/$f.svg" "site/$f.png" \
+                || echo "::warning::$f.png render skipped (sharp install/render failed)"
+            else
+              echo "No $f.svg yet."
+            fi
+          done
 
       - name: Upload momentum.png artifact
         if: hashFiles('site/momentum.png') != ''
@@ -57,6 +66,13 @@ jobs:
         with:
           name: momentum
           path: site/momentum.png
+
+      - name: Upload dashboard.png artifact
+        if: hashFiles('site/dashboard.png') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard
+          path: site/dashboard.png
 
       - name: Fire alerts for new high-score listings
         env:

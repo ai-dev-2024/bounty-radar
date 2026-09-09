@@ -253,7 +253,7 @@ const html = `<!doctype html>
     <span><a href="bounties.json">{ } JSON for agents</a></span>
   </div>
 ${MOMENTUM_CHART ? `  <div class="momentum">
-    <div class="momentum-head">🚀 Launch momentum — <b>${MOMENTUM_LAST.pts}</b> pts · <b>${MOMENTUM_LAST.comments}</b> comments${momentum.some((s) => s.stars != null) ? ` · <b style="color:#d29922">★ ${MOMENTUM_LAST.stars ?? "…"}</b> repo stars` : ""} · <span style="color:#3fb950">—</span> points <span style="color:#d29922">—</span> stars <span style="color:#58a6ff">▮</span> comments · <a href="https://news.ycombinator.com/item?id=${process.env.HN_ITEM_ID ?? ""}">HN thread</a> · <a href="momentum.svg">shareable chart</a> · <a href="hn-momentum.json">raw data</a></div>
+    <div class="momentum-head">🚀 Launch momentum — <b>${MOMENTUM_LAST.pts}</b> pts · <b>${MOMENTUM_LAST.comments}</b> comments${momentum.some((s) => s.stars != null) ? ` · <b style="color:#d29922">★ ${MOMENTUM_LAST.stars ?? "…"}</b> repo stars` : ""} · <span style="color:#3fb950">—</span> points <span style="color:#d29922">—</span> stars <span style="color:#58a6ff">▮</span> comments · <a href="https://news.ycombinator.com/item?id=${process.env.HN_ITEM_ID ?? ""}">HN thread</a> · <a href="momentum.svg">shareable chart</a> · <a href="dashboard.svg">full dashboard</a> · <a href="hn-momentum.json">raw data</a></div>
     <svg viewBox="0 0 940 120" width="100%" height="120" role="img" aria-label="Hacker News thread points over time" preserveAspectRatio="none">
       ${MOMENTUM_CHART}
     </svg>
