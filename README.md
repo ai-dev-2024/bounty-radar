@@ -1,11 +1,16 @@
 # 🎯 Bounty Radar
 
-**Live site: https://ai-dev-2024.github.io/bounty-radar/**
+**Live site: https://ai-dev-2024.github.io/bounty-radar/** · **API: https://bounty-radar-api.ai-dev-2024.workers.dev**
 
 A daily-verified feed of real, payable open-source work — bounties, jobs, challenges — built for humans *and* coding agents. Dead repos, expired programs, and escrow-less spam farms are filtered out before they ever reach you.
 
 [![sweep-and-publish](https://github.com/ai-dev-2024/bounty-radar/actions/workflows/sweep-and-publish.yml/badge.svg)](https://github.com/ai-dev-2024/bounty-radar/actions/workflows/sweep-and-publish.yml)
+[![API](https://img.shields.io/badge/API-live%20on%20Cloudflare%20Workers-F38020?logo=cloudflare&logoColor=white)](https://bounty-radar-api.ai-dev-2024.workers.dev/v1/stats)
+[![RSS](https://img.shields.io/badge/RSS-feed.xml-orange?logo=rss&logoColor=white)](https://ai-dev-2024.github.io/bounty-radar/feed.xml)
+![zero deps](https://img.shields.io/badge/dependencies-0-success)
 ![sources](https://img.shields.io/badge/sources-Algora%20·%20Opire%20·%20GitHub-blue)
+
+![Bounty Radar live board](docs/screenshot.png)
 
 ## What you get
 
