@@ -102,6 +102,16 @@ The PR-watching half of the digest is already live — no setup needed.
 
 ## Pre-flight checklist
 
+**One command verifies everything below against production:**
+
+```
+npm run preflight
+```
+
+It checks all links, the API examples, PR #2937, the chart pipeline, the HN variable and secrets — and compares every number in the first comment to the live data. Exit 0 = GO. Re-run launch morning; counts drift.
+
+Manual items it can't check:
+
 - [ ] Site loads on mobile (HN traffic is ~half mobile)
 - [ ] `bounties.json` fresh (cron at 00:00/06:00/12:00/18:00 UTC — check `meta.generated_at`)
 - [ ] API 200s: `/v1/stats`, `/v1/listings?escrow_only=1`, `/v1/launch`
