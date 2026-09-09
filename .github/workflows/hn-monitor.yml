@@ -43,6 +43,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          [ -f state/hn-monitor.json ] || { echo "No state file yet (nothing polled)."; exit 0; }
           git add state/hn-monitor.json
           if ! git diff --cached --quiet; then
             git commit -m "chore: hn monitor state"
