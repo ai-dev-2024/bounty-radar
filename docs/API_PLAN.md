@@ -127,7 +127,7 @@ Freemium, flat tiers (per-agent metering is fiddly — flat is cleaner to start;
 
 ## 7. Risks & honest caveats
 
-- **Thin inventory is the real risk.** Our own sweeps show the bounty market is currently dry (13 verified listings, most stale). The API sells *leads*, and leads are scarce in a drought. Mitigation: `/v1/stats` turns the drought itself into content; expand sources (more orgs, GitLab, project-native programs) before scaling sales.
+- **Thin inventory is the real risk.** Our own sweeps show the bounty market is currently dry (roughly a dozen verified listings, most stale). The API sells *leads*, and leads are scarce in a drought. Mitigation: `/v1/stats` turns the drought itself into content; expand sources (more orgs, GitLab, project-native programs) before scaling sales.
 - **No data moat.** Anyone can copy the scraper. Defense = verification reputation, freshness, distribution head start in agent ecosystems, and being the *default* integration agents ship with.
 - **ToS/porting:** all data comes from public GitHub API + public Algora pages — factual metadata republication is standard practice (cf. every existing aggregator). Keep per-source attribution in responses; respect upstream rate limits; add contact header.
 - **Payment/payout confusion:** we sell *information*, never handle bounty money — keep that boundary loud in marketing (avoids "scam?" skepticism we ourselves researched).
