@@ -5,3 +5,5 @@ hook-test.log
 srv.log
 !state/
 worker/.wrangler/
+worker/dev.log
+worker/dev2.log
