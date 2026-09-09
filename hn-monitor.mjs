@@ -171,10 +171,12 @@ async function poll() {
   }
 
   // --- GitHub PR part ---
+  let reviewEvents = 0;
   if (process.env.GH_TOKEN || process.env.GITHUB_TOKEN || hasFlag("github")) {
     try {
       const { alerts, prCount } = await pollGithub(seen);
-      console.log(`[gh] ${prCount} open PRs watched, ${alerts.length} new event(s)`);
+      reviewEvents = alerts.filter((a) => a.kind === "review").length;
+      console.log(`[gh] ${prCount} open PRs watched, ${alerts.length} new event(s) (${reviewEvents} review-state)`);
       for (const a of alerts.slice(0, 10)) {
         digest.push(`**GH** ${a.key} · ${esc(a.by)} · <${a.url}>\n> ${esc(a.text)}`);
       }
@@ -196,17 +198,42 @@ async function poll() {
 
   mkdirSync(dirname(STATE_PATH), { recursive: true });
   writeFileSync(STATE_PATH, JSON.stringify(seen), "utf8");
+
+  // Fast follow-up: a review-state change often gets a maintainer reply within
+  // minutes. CI scheduled runs self-dispatch an extra poll ~90s later; loop
+  // mode schedules one 45s out. Dispatched runs never re-dispatch (no loops).
+  if (reviewEvents > 0) {
+    if (process.env.GH_EVENT_NAME === "schedule" && process.env.GITHUB_REPOSITORY && process.env.GH_TOKEN) {
+      try {
+        await execFileAsync("gh", ["api", `repos/${process.env.GITHUB_REPOSITORY}/dispatches`,
+          "-f", "event_type=hn-followup",
+          "-F", `client_payload[reason]=review-change(${reviewEvents})`], { timeout: 30000 });
+        console.log("[monitor] review-state change → dispatched immediate follow-up poll");
+      } catch (e) { console.error("[monitor] self-dispatch failed:", e.message); }
+    } else if (LOOP) {
+      setTimeout(() => poll().catch((e) => console.error("[monitor]", e.message)), 45_000);
+      console.log("[monitor] review-state change → extra poll in 45s");
+    }
+  }
+
+  return { reviewEvents };
 }
 
 try {
+  // Follow-up runs (repository_dispatch) pause briefly so maintainers have a
+  // moment to respond, then poll once for the catch-up events.
+  if (process.env.FOLLOWUP === "1") {
+    console.log("[monitor] follow-up run: waiting 90s then polling…");
+    await new Promise((r) => setTimeout(r, 90_000));
+  }
   if (LOOP) {
-    console.log(`[hn] watching item ${ITEM_ID} every ${POLL_SECONDS}s`);
+    console.log(`[monitor] watching ${ITEM_ID ? "HN item " + ITEM_ID : ""}${ITEM_ID ? " + " : ""}GitHub PRs every ${POLL_SECONDS}s`);
     await poll();
-    setInterval(() => poll().catch((e) => console.error("[hn]", e.message)), POLL_SECONDS * 1000);
+    setInterval(() => poll().catch((e) => console.error("[monitor]", e.message)), POLL_SECONDS * 1000);
   } else {
     await poll();
   }
 } catch (e) {
-  console.error("[hn] failed:", e.message);
+  console.error("[monitor] failed:", e.message);
   process.exit(1);
 }
