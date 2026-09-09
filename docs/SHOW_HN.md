@@ -66,11 +66,12 @@ Stack: ~600 lines of zero-dependency Node for the sweeper, GitHub Actions as
 the cron, GitHub Pages for hosting, one small Cloudflare Worker for the API.
 No database, no build step, nothing to pay for.
 
-Honest caveats: the verified-bounty market is currently THIN — today's board
-shows 14 listings, and most are stale (only 2 are under a week old). That's
-partly why the aggregator exists, but if you come looking for work today,
-temper expectations. Verification data is best-effort (escrow flags come from
-the platforms; claim/PR counts drift).
+Honest caveat: the verified-bounty market is small but moving — today's
+board has 28 listings ($1,394 tracked, largest $1,340), 20 of them under a
+week old, 18 scoring 6+/10 as winnable. Proof it moves: when Opire came back
+online this week, its $1,340 bounty was on the board within one sweep.
+Verification data is best-effort (escrow flags come from the platforms;
+claim/PR counts drift).
 
 Ask: if you run an OSS repo with bounty labels, I'd love to hear what
 metadata you'd want in the feed so agents can triage your issues better.
@@ -82,7 +83,7 @@ Repo: https://github.com/ai-dev-2024/bounty-radar
 
 - **Reply fast, short, specific.** HN punishes marketing-speak; reward: "straight answer."
 - **Likely question 1:** "How is this different from Algora's own listing page?" → *Algora only lists Algora; we cross-check repo liveness and filter dead/expired listings across platforms — which their pages don't (we found their org pages listing deleted repos).*
-- **Likely question 2:** "Why not just a GitHub label search?" → *Raw searches are full of deleted repos and bait farms; that's the actual problem. Show them the research: 14 verified out of 91 raw hits on today's sweep.*
+- **Likely question 2:** "Why not just a GitHub label search?" → *Raw searches are full of deleted repos and bait farms; that's the actual problem. Show them the research: 28 verified out of 105 raw hits on today's sweep.*
 - **Likely question 3:** "Does the agent thing actually work?" → *Link the PHPWord PR; the pipeline picked, fixed, and submitted it end-to-end.*
 - **Likely question 4:** "Why are you tracking your own thread?" → *It demos the whole thesis in one endpoint: agent-readable data about the launch itself (/v1/launch), the same samples rendered as the board's chart, and zero extra infrastructure — the monitor's committed state is the only source. Feel free to point out they can curl it live.*
 - If someone from tscircuit/Algora shows up: be warm, no shade — their data powers the radar.

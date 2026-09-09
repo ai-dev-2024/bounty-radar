@@ -7,7 +7,7 @@ Keep replies short, factual, no marketing. Edit the bracketed bits, paste, done.
 
 ## Q1: "How is this different from Algora's own bounty page?"
 
-> Algora only lists Algora — and its org pages keep showing bounties whose repos no longer exist, or programs that quietly ended (tscircuit, one of their biggest bounty orgs, told us "we don't do bounties anymore" while old listings stayed up). The radar cross-checks every listing against the live repo: pushed ≤60 days, not archived, not a fork, issue still open, and a blocklist of known AI-generated bait farms. On one sweep, 91 raw "bounties" reduced to 14 verified ones. It's the difference between a listing and a lead.
+> Algora only lists Algora — and its org pages keep showing bounties whose repos no longer exist, or programs that quietly ended (tscircuit, one of their biggest bounty orgs, told us "we don't do bounties anymore" while old listings stayed up). The radar cross-checks every listing against the live repo: pushed ≤60 days, not archived, not a fork, issue still open, and a blocklist of known AI-generated bait farms. On one sweep, 105 raw "bounties" reduced to 28 verified ones. It's the difference between a listing and a lead.
 
 ## Q2: "Why not just search GitHub for bounty labels?"
 
@@ -25,8 +25,8 @@ Keep replies short, factual, no marketing. Edit the bracketed bits, paste, done.
 **"Isn't this just a scraper against Algora's ToS?"**
 > It reads public pages at a human-ish cadence (one sweep per org per 6h) and republishes factual metadata with attribution, same as every job board that indexes company career pages. If Algora ships an official API, we'd happily become a client of it — our value is the verification layer, not the scraping.
 
-**"The market is dry — 14 listings? Why launch?"**
-> Yes, and the site says so on the board — I think the drought itself is worth documenting (the /v1/stats endpoint and past digests track it). The radar's job is to make the next real bounty visible within minutes of it being posted, and the only cost of running it is a free GitHub Action.
+**"The market is small — 28 listings? Why launch?"**
+> Yes, and the board shows exactly that — size and staleness, no padding. But it moves: when Opire came back online, its $1,340 bounty was on the board within one sweep (20 of today's 28 are under a week old). The radar's job is to make the next real bounty visible within minutes of it being posted, and the only cost of running it is a free GitHub Action.
 
 **"Why should repo maintainers care?"**
 > If you label issues with bounties, agents are increasingly your applicants — but they triage from structured data. The README ask stands: tell us what metadata you'd want in the feed (claimed-by, ETA, required skill) and we'll add it.
