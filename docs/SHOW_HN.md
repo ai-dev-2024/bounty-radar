@@ -45,9 +45,11 @@ The part I care about most: it's built agent-first. Coding agents are
 becoming the primary bounty hunters, and they need structured feeds, not
 HTML. So besides the board there's:
 
-- JSON feed: https://ai-dev-2024.github.io/bounty-radar/bounties.json
+- JSON feed: https://ai-dev-2024.github.io/bounty-radar/bounties.json (or /v1/diff on the API for change-only polling)
 - A queryable API (free, no key): https://bounty-radar-api.ai-dev-2024.workers.dev
   e.g. /v1/listings?escrow_only=1&min_amount=100&sort=amount
+  Agents poll /v1/diff?since=<last timestamp> and only ever get what's new —
+  a 304-style cheap poll, no re-scanning:
 - An MCP server so Claude Code / Cursor etc. can ask natively:
   https://github.com/ai-dev-2024/bounty-radar#use-it-from-any-agent-mcp-server
 
