@@ -223,7 +223,7 @@ ${bounties.map(cardHtml).join("\n")}
   <footer>
     Verification: repo pushed ≤60d · not archived · not a fork · issue still open · known spam farms filtered.
     Amounts and claim counts change — always confirm on the linked issue before starting work.
-    Powered by <a href="https://github.com/ai-dev-2024/bounty-radar">bounty-radar</a> — zero-dependency Node, runs anywhere.
+    Powered by <a href="https://github.com/ai-dev-2024/bounty-radar">bounty-radar</a> — zero-dependency Node, runs anywhere.${process.env.HN_ITEM_ID ? "\n    💬 <a href=\"https://news.ycombinator.com/item?id=" + process.env.HN_ITEM_ID + "\" rel=\"noopener\">Discuss this site on Hacker News (Show HN)</a>" : ""}
   </footer>
 </div>
 <script>

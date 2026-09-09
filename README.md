@@ -21,6 +21,9 @@ A daily-verified feed of real, payable open-source work — bounties, jobs, chal
 | JSON feed | [/bounties.json](https://ai-dev-2024.github.io/bounty-radar/bounties.json) | agents — poll it, act on it |
 | **Queryable API** | [bounty-radar-api.workers.dev](https://bounty-radar-api.ai-dev-2024.workers.dev/v1/stats) · [spec](https://bounty-radar-api.ai-dev-2024.workers.dev/openapi.json) | agents — filters, quota, keys |
 | MCP server | [`mcp-server.mjs`](mcp-server.mjs) | agents — native tools, no HTTP |
+| Show HN thread | [news.ycombinator.com/item?id=HN_ITEM_ID](https://news.ycombinator.com/item?id=HN_ITEM_ID) | community — launch discussion & feedback |
+
+> **HN_ITEM_ID placeholder** — after submitting to Show HN, replace `HN_ITEM_ID` in the link above with the real item id (see [Launch](#show-hn-launch)), and the site footer updates itself.
 
 ### API tiers
 
@@ -68,18 +71,6 @@ No backend, no database, no hosting bill. GitHub Pages + Actions are the entire 
 
 **No, you don't need Cloudflare/Vercel/Fly.io.** This is a static site + cron — GitHub Pages serves it and GitHub Actions computes it, free, forever. You'd only add a host when there's a live API with keys/paywalls (see [docs/API_PLAN.md](docs/API_PLAN.md), Stage 1+).
 
-## Use it from an agent
-
-```json
-{ "mcpServers": { "bounty-radar": {
-    "command": "node",
-    "args": ["/path/to/mcp-server.mjs"] } } }
-```
-
-Tools: `search_bounties` (`min_score`, `min_amount`, `escrow_only`, …) · `get_listing` · `whats_new` · `get_stats`.
-
-Or skip MCP entirely: `fetch("https://ai-dev-2024.github.io/bounty-radar/bounties.json")`.
-
 ## Proof it works end-to-end
 
 The pipeline picked its own bounty via the MCP server, fixed it, and opened the PR:
@@ -110,3 +101,14 @@ Node 20+, `gh` authed. Zero npm dependencies.
 | `notify.mjs` | Discord/Telegram alerts w/ dedup |
 | `.github/workflows/sweep-and-publish.yml` | the whole pipeline on cron |
 | `docs/API_PLAN.md` | product plan for the API stage |
+| `docs/SHOW_HN.md` · `docs/HN_REPLIES.md` | launch kit + fast reply templates |
+
+## Show HN launch
+
+Kit: [`docs/SHOW_HN.md`](docs/SHOW_HN.md) (title, first comment, pre-flight) · [`docs/HN_REPLIES.md`](docs/HN_REPLIES.md) (reply templates). After you submit:
+
+1. Copy the item id from your post URL (`news.ycombinator.com/item?id=XXXXXXXX`)
+2. Replace `HN_ITEM_ID` in the link above with that number
+3. Repo → Settings → Secrets and variables → Actions → **Variables** → new variable `HN_ITEM_ID` = the number
+
+Step 3 arms everything at once: the 10-minute thread monitor **and** the "Discuss on Hacker News" link in the live site footer (it appears on the next 6h publish — run the workflow manually to make it instant).

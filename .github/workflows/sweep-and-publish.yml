@@ -37,6 +37,7 @@ jobs:
         run: node build-site.mjs feed.json site
         env:
           GH_TOKEN: ${{ github.token }}
+          HN_ITEM_ID: ${{ vars.HN_ITEM_ID }} # set after Show HN submission → footer link appears automatically
 
       - name: Fire alerts for new high-score listings
         env:
