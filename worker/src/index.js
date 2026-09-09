@@ -251,6 +251,39 @@ async function stats(env) {
   }, {});
 }
 
+// /v1/diff — cheap agent polling: what changed since a previous sweep.
+// "since" = feed.generated_at from a prior response. Returns only listings
+// that appeared after that timestamp. Deleted/closed listings can't be seen
+// after a feed refresh, so agents diff client-side with listing_ids for exact
+// removals; this endpoint answers "anything new worth looking at?" in one call.
+async function diff(request, env) {
+  const p = Object.fromEntries(new URL(request.url).searchParams);
+  const feed = await getFeed(env);
+  const since = p.since ? new Date(p.since) : null;
+  if (p.since && (Number.isNaN(since.getTime()) || since.getTime() > Date.now())) {
+    return json({ error: "invalid 'since' (expect ISO timestamp from meta.generated_at)" }, { status: 400, request });
+  }
+  const generatedAt = new Date(feed.generatedAt);
+  const isNew = !since || generatedAt > since; // new sweep ⇒ treat all as new for this caller
+  const items = isNew ? (feed.bounties ?? []) : [];
+  const summaries = items.map(summarize);
+  return json(
+    {
+      data: summaries,
+      meta: {
+        ...meta(feed),
+        since: since ? since.toISOString() : null,
+        sweep_newer_than_since: isNew,
+        count: summaries.length,
+        // ponytail: no per-listing first_seen timestamps yet — sweep granularity only.
+        // Add first_seen in radar.mjs output if per-listing diffs become necessary.
+        next_poll_hint: "pass meta.generated_at as ?since= next time",
+      },
+    },
+    { request },
+  );
+}
+
 const OPENAPI = {
   openapi: "3.0.3",
   info: { title: "Bounty Radar API", version: "1.0.0",
@@ -274,6 +307,10 @@ const OPENAPI = {
       parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
       responses: { "200": { description: "Listing" }, "404": { description: "Not found" } } } },
     "/v1/sources": { get: { summary: "Per-source counts + freshness", responses: { "200": { description: "OK" } } } },
+    "/v1/diff": { get: { summary: "New listings since your last poll (cheap polling)",
+      parameters: [{ name: "since", in: "query", required: false, schema: { type: "string", format: "date-time" },
+        description: "meta.generated_at from your previous call. Omit on first call." }],
+      responses: { "200": { description: "Listings newer than 'since' (empty if your last poll was after the latest sweep)" } } } },
     "/v1/stats": { get: { summary: "Market pulse", responses: { "200": { description: "OK" } } } },
   },
 };
@@ -288,7 +325,7 @@ export default {
       if (request.method === "POST" && pathname === "/v1/keys") return await handleCreateKey(env, request);
       if (pathname === "/openapi.json") return json(OPENAPI, { request });
       if (pathname === "/") return json({ name: "bounty-radar-api", version: "2.0.0", docs: "/openapi.json",
-        endpoints: ["/v1/listings", "/v1/listings/{id}", "/v1/sources", "/v1/stats", "/v1/keys (POST)", "/v1/keys/me"],
+        endpoints: ["/v1/listings", "/v1/listings/{id}", "/v1/diff", "/v1/sources", "/v1/stats", "/v1/keys (POST)", "/v1/keys/me"],
         auth: "Authorization: Bearer brk_… (optional; anonymous = 100 req/day per IP, free key = 1000/day)" }, { request });
 
       // Everything below consumes quota.
@@ -301,6 +338,7 @@ export default {
       else if (pathname === "/v1/listings") res = await listings(request, env);
       else if (pathname.startsWith("/v1/listings/")) res = await listings(request, env, pathname.slice("/v1/listings/".length));
       else if (pathname === "/v1/sources") res = await sources(env);
+      else if (pathname === "/v1/diff") res = await diff(request, env);
       else if (pathname === "/v1/stats") res = await stats(env);
       else if (pathname === "/v1/webhooks/stripe" && request.method === "POST") return await handleStripeWebhook(env, request);
       else res = json({ error: "not found" }, { status: 404, request });
