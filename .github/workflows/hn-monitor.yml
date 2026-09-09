@@ -1,8 +1,8 @@
 name: hn-monitor
 
-# Watch the Show HN thread; alert on new comments / score movement.
-# Enable by adding the HN_ITEM_ID variable (repo → Settings → Variables → Actions)
-# once the submission is live. Skips silently until then.
+# Watch the Show HN thread AND our open GitHub PRs; one alert digest.
+# HN part activates by adding the HN_ITEM_ID variable after submitting.
+# PR part runs always (uses the built-in token via gh CLI).
 
 on:
   schedule:
@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: read
 
 concurrency:
   group: hn-monitor
@@ -26,18 +27,18 @@ jobs:
         with:
           node-version: 22
 
-      - name: Poll HN thread & alert
+      - name: Configure gh auth
+        run: echo "${{ github.token }}" | gh auth login --with-token
+
+      - name: Poll HN thread + GitHub PRs, alert digest
         env:
           HN_ITEM_ID: ${{ vars.HN_ITEM_ID }}
+          GH_AUTHOR: ${{ github.repository_owner }}
+          GH_TOKEN: ${{ github.token }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: |
-          if [ -z "$HN_ITEM_ID" ]; then
-            echo "HN_ITEM_ID not set — add it after submitting to Show HN. Skipping."
-            exit 0
-          fi
-          node hn-monitor.mjs --state state/hn-monitor.json
+        run: node hn-monitor.mjs --state state/hn-monitor.json
 
       - name: Commit monitor state (dedup across runs)
         run: |
