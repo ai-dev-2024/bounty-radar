@@ -81,6 +81,16 @@ Repo: https://github.com/ai-dev-2024/bounty-radar
 - If someone from tscircuit/Algora shows up: be warm, no shade — their data powers the radar.
 - **Don't** mention monetization plans unless asked directly ("Stage 2" pricing exists in the repo docs — fine to link if asked).
 
+## Step 4 — Arm the thread monitor (10 seconds, right after submitting)
+
+The `hn-monitor` workflow watches your thread every 10 minutes and pings Discord on every new comment (plus GitHub PR reviews in the same digest). It activates the moment you set one variable:
+
+1. **Get the item id** — after submitting, your post's URL is `https://news.ycombinator.com/item?id=XXXXXXXX`. Copy that number.
+2. **Add it** — go to https://github.com/ai-dev-2024/bounty-radar/settings/variables/actions → **New repository variable** → Name: `HN_ITEM_ID`, Value: the number → **Add variable**.
+3. **Done** — the next 10-minute tick starts watching. (Optional smoke test: Repo → Actions → "hn-monitor" → Run workflow → check it went green and Discord got a "nothing new" or seed digest.)
+
+The PR-watching half of the digest is already live — no setup needed.
+
 ## Pre-flight checklist
 
 - [ ] Site loads on mobile (HN traffic is ~half mobile)
