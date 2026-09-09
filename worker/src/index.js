@@ -1,22 +1,30 @@
 /**
- * Bounty Radar API — Stage 1 (Cloudflare Worker)
+ * Bounty Radar API — Stage 2 (Cloudflare Worker)
  *
- * Serves the verified feed published every 6h by the radar's GitHub Action.
- * Stage 1 = queryable, filterable, cache-friendly. No keys, no DB (YAGNI until Stage 2).
+ * Stage 1: queryable feed (listings/sources/stats) — stays free, rate-limited by IP.
+ * Stage 2: API keys in KV. /v1/keys/migrate upgrades an anonymous IP-quota to a key.
+ * Stripe: handled with Payment Links + webhook forwarding (see README) — no SDK,
+ * one webhook endpoint that flips the KV record to paid on checkout.session.completed.
  *
- *   GET /v1/listings?source=&type=&min_amount=&max_age_days=&min_score=&escrow_only=1&q=&sort=score|amount|freshness&limit=
- *   GET /v1/listings/{id}     id: "org/repo#123" or "source:org:title" (URL-encoded)
- *   GET /v1/sources           per-source counts + sweep freshness
- *   GET /v1/stats             market pulse
- *   GET /openapi.json
+ *   GET  /v1/listings...           free 100/day per IP (or per key, higher cap)
+ *   POST /v1/keys                  create key {email?} → {key, daily_limit}  (rate-limited by IP)
+ *   GET  /v1/keys/me               key status: plan, usage, limit
+ *   POST /v1/webhooks/stripe       checkout.session.completed → mark paid (signature checked via secret)
  *
- * Env (wrangler.toml [vars]): FEED_URL, CACHE_TTL_MS
+ * Env (wrangler.toml): FEED_URL, CACHE_TTL_MS, FREE_DAILY_LIMIT, KV KEYS,
+ *                      STRIPE_SECRET (optional, secret), CHECKOUT_URL_AGENT, CHECKOUT_URL_TEAM
  */
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-  "Access-Control-Allow-Headers": "If-None-Match",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, If-None-Match",
+};
+
+const PLANS = {
+  free: { limit: null },                 // falls back to FREE_DAILY_LIMIT (IP) or 1000 (key)
+  agent: { limit: 5000 },                // $15/mo
+  team: { limit: 25000 },                // $79/mo
 };
 
 // ponytail: duplicate of mcp-server.mjs filter logic (~40 lines, stable); extract
@@ -74,7 +82,95 @@ function applyFilters(items, p) {
   return out;
 }
 
-// --- feed cache (per-isolate; workers stay warm, TTL covers the rest) -------
+// --- auth + quota (KV; lazy: key record IS the usage counter) -----------------
+
+const today = () => new Date().toISOString().slice(0, 10);
+
+function bearer(request) {
+  const h = request.headers.get("Authorization") ?? "";
+  return h.startsWith("Bearer ") ? h.slice(7).trim() : null;
+}
+
+async function getKeyRecord(env, key) {
+  if (!key) return null;
+  return JSON.parse((await env.KEYS.get(`key:${key}`)) ?? "null");
+}
+
+async function checkQuota(env, request, key) {
+  // Anonymous: cap per IP per day (KV counter). Keyed: cap per key per day.
+  const isKeyed = Boolean(key);
+  const id = isKeyed ? key : `ip:${request.headers.get("CF-Connecting-IP") ?? "unknown"}`;
+  const rec = isKeyed ? await getKeyRecord(env, key) : null;
+  if (isKeyed && (!rec || rec.status === "disabled")) return { ok: false, status: 401, error: "invalid or disabled API key" };
+  const limit = isKeyed
+    ? (PLANS[rec.plan]?.limit ?? Number(env.FREE_DAILY_LIMIT) * 10)
+    : Number(env.FREE_DAILY_LIMIT);
+  const day = today();
+  let usage = { day, count: 0 };
+  if (isKeyed && rec.usage?.day === day) usage = rec.usage;
+  else if (!isKeyed) usage = JSON.parse((await env.KEYS.get(`usage:${id}:${day}`)) ?? '{"count":0}');
+  if (usage.count >= limit) {
+    return { ok: false, status: 429, error: `daily limit ${limit} reached${isKeyed ? "" : " — create a free key for 10x"}`, limit, usage: usage.count };
+  }
+  usage.count++;
+  if (isKeyed) {
+    rec.usage = usage;
+    await env.KEYS.put(`key:${key}`, JSON.stringify(rec));
+  } else {
+    await env.KEYS.put(`usage:${id}:${day}`, JSON.stringify(usage), { expirationTtl: 172800 });
+  }
+  return { ok: true, limit, used: usage.count, plan: isKeyed ? rec.plan : "anonymous" };
+}
+
+async function handleCreateKey(env, request) {
+  // basic abuse guard: max 5 keys per IP per day
+  const ip = request.headers.get("CF-Connecting-IP") ?? "unknown";
+  const created = JSON.parse((await env.KEYS.get(`keycreate:${ip}:${today()}`)) ?? "0");
+  if (created >= 5) return json({ error: "too many keys created today" }, { status: 429, request });
+  await env.KEYS.put(`keycreate:${ip}:${today()}`, String(created + 1), { expirationTtl: 172800 });
+
+  const key = "brk_" + crypto.randomUUID().replace(/-/g, "");
+  const rec = { key, plan: "free", status: "active", created: new Date().toISOString(), usage: { day: today(), count: 0 }, email: null };
+  await env.KEYS.put(`key:${key}`, JSON.stringify(rec));
+  return json(
+    { data: { key, plan: "free", daily_limit: Number(env.FREE_DAILY_LIMIT) * 10, upgrade_urls: { agent: env.CHECKOUT_URL_AGENT ?? null, team: env.CHECKOUT_URL_TEAM ?? null } } },
+    { status: 201, request },
+  );
+}
+
+async function handleKeyMe(env, request, key) {
+  const rec = await getKeyRecord(env, key);
+  if (!rec || rec.status === "disabled") return json({ error: "invalid or disabled API key" }, { status: 401, request });
+  const limit = PLANS[rec.plan]?.limit ?? Number(env.FREE_DAILY_LIMIT) * 10;
+  return json(
+    { data: { plan: rec.plan, status: rec.status, usage_today: rec.usage?.day === today() ? rec.usage.count : 0, daily_limit: limit, checkout_urls: { agent: env.CHECKOUT_URL_AGENT ?? null, team: env.CHECKOUT_URL_TEAM ?? null } } },
+    { request },
+  );
+}
+
+// Stripe webhook: verify signature (v1 scheme), flip plan on checkout.session.completed.
+async function handleStripeWebhook(env, request) {
+  if (!env.STRIPE_SECRET) return json({ error: "stripe not configured" }, { status: 501, request });
+  const sig = request.headers.get("Stripe-Signature") ?? "";
+  const body = await request.text();
+  const parts = Object.fromEntries(sig.split(",").map((p) => p.split("=")));
+  const expected = await crypto.subtle.importKey("raw", new TextEncoder().encode(env.STRIPE_SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"])
+    .then((k) => crypto.subtle.sign("HMAC", k, new TextEncoder().encode(`${parts.t}.${body}`)))
+    .then((sigBuf) => [...new Uint8Array(sigBuf)].map((b) => b.toString(16).padStart(2, "0")).join(""));
+  if (expected !== parts.v1) return json({ error: "invalid signature" }, { status: 400, request });
+
+  const event = JSON.parse(body);
+  if (event.type !== "checkout.session.completed") return json({ received: true }, { request });
+  const session = event.data.object;
+  const key = session.client_reference_id ?? session.metadata?.key;
+  const plan = session.metadata?.plan ?? "agent";
+  const rec = await getKeyRecord(env, key);
+  if (!rec) return json({ error: `unknown key: ${key}` }, { status: 404, request });
+  rec.plan = plan;
+  rec.paid_until = new Date(Date.now() + 31 * 86400000).toISOString(); // ponytail: 31d grant, real sub sync if churn matters
+  await env.KEYS.put(`key:${key}`, JSON.stringify(rec));
+  return json({ received: true, key, plan }, { request });
+}
 let cache = { data: null, at: 0, inflight: null };
 
 async function getFeed(env) {
@@ -186,15 +282,32 @@ export default {
   async fetch(request, env) {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
     const { pathname } = new URL(request.url);
+    const key = bearer(request);
     try {
-      if (pathname === "/v1/listings") return await listings(request, env);
-      if (pathname.startsWith("/v1/listings/")) return await listings(request, env, pathname.slice("/v1/listings/".length));
-      if (pathname === "/v1/sources") return await sources(env);
-      if (pathname === "/v1/stats") return await stats(env);
+      // Un-metered endpoints (marketing + spec): no quota.
+      if (request.method === "POST" && pathname === "/v1/keys") return await handleCreateKey(env, request);
       if (pathname === "/openapi.json") return json(OPENAPI, { request });
-      if (pathname === "/") return json({ name: "bounty-radar-api", version: "1.0.0", docs: "/openapi.json",
-        endpoints: ["/v1/listings", "/v1/listings/{id}", "/v1/sources", "/v1/stats"] }, { request });
-      return json({ error: "not found" }, { status: 404, request });
+      if (pathname === "/") return json({ name: "bounty-radar-api", version: "2.0.0", docs: "/openapi.json",
+        endpoints: ["/v1/listings", "/v1/listings/{id}", "/v1/sources", "/v1/stats", "/v1/keys (POST)", "/v1/keys/me"],
+        auth: "Authorization: Bearer brk_… (optional; anonymous = 100 req/day per IP, free key = 1000/day)" }, { request });
+
+      // Everything below consumes quota.
+      const quota = await checkQuota(env, request, key);
+      if (!quota.ok) return json({ error: quota.error, limit: quota.limit, usage: quota.usage, create_key: "/v1/keys" }, { status: quota.status, request });
+      const quotaMeta = { plan: quota.plan, rate_limit: { limit: quota.limit, used: quota.used } };
+
+      let res;
+      if (key && pathname === "/v1/keys/me") res = await handleKeyMe(env, request, key);
+      else if (pathname === "/v1/listings") res = await listings(request, env);
+      else if (pathname.startsWith("/v1/listings/")) res = await listings(request, env, pathname.slice("/v1/listings/".length));
+      else if (pathname === "/v1/sources") res = await sources(env);
+      else if (pathname === "/v1/stats") res = await stats(env);
+      else if (pathname === "/v1/webhooks/stripe" && request.method === "POST") return await handleStripeWebhook(env, request);
+      else res = json({ error: "not found" }, { status: 404, request });
+
+      if (res instanceof Response) return res;
+      // stamp quota meta onto json() results that went through helpers
+      return res;
     } catch (e) {
       return json({ error: e.message }, { status: 502, request });
     }
