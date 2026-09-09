@@ -2,6 +2,11 @@ name = "bounty-radar-api"
 main = "src/index.js"
 compatibility_date = "2026-09-01"
 
+[[kv_namespaces]]
+binding = "KEYS"
+id = "5c2e0e88e29e456bbd432de6200ece96"
+
 [vars]
 FEED_URL = "https://ai-dev-2024.github.io/bounty-radar/bounties.json"
 CACHE_TTL_MS = "600000"
+FREE_DAILY_LIMIT = "100"

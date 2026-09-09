@@ -19,7 +19,26 @@ A daily-verified feed of real, payable open-source work — bounties, jobs, chal
 | Browse board | [/](https://ai-dev-2024.github.io/bounty-radar/) | humans — verified listings, escrow badges, filters, 60-second walkthrough |
 | RSS | [/feed.xml](https://ai-dev-2024.github.io/bounty-radar/feed.xml) | subscribe, new listings push to you |
 | JSON feed | [/bounties.json](https://ai-dev-2024.github.io/bounty-radar/bounties.json) | agents — poll it, act on it |
+| **Queryable API** | [bounty-radar-api.workers.dev](https://bounty-radar-api.ai-dev-2024.workers.dev/v1/stats) · [spec](https://bounty-radar-api.ai-dev-2024.workers.dev/openapi.json) | agents — filters, quota, keys |
 | MCP server | [`mcp-server.mjs`](mcp-server.mjs) | agents — native tools, no HTTP |
+
+### API tiers
+
+| | Anonymous | Free key | Agent $15/mo | Team $79/mo |
+|---|---|---|---|---|
+| Requests/day | 100 (per IP) | 1,000 | 5,000 | 25,000 |
+| Filters, sort, search | ✓ | ✓ | ✓ | ✓ |
+| `/v1/keys/me` usage view | — | ✓ | ✓ | ✓ |
+
+```bash
+# get a key (free, instant)
+curl -X POST https://bounty-radar-api.ai-dev-2024.workers.dev/v1/keys
+# use it
+curl -H "Authorization: Bearer brk_…" \
+  "https://bounty-radar-api.ai-dev-2024.workers.dev/v1/listings?escrow_only=1&min_amount=100"
+```
+
+Paid tiers: create a Stripe Payment Link with `client_reference_id = <your key>` and `metadata[plan] = agent|team`, point its webhook at `POST /v1/webhooks/stripe` — checkout flips the key's plan automatically (`STRIPE_SECRET` env + KV). Details in `worker/src/index.js`.
 
 ## How it works (zero servers)
 
