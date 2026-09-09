@@ -44,15 +44,27 @@ node radar.mjs --max-age 14   # only bounties aged ≤ 14 days
 
 Requires: Node 20+, `gh` CLI authenticated (`gh auth login`).
 
+## Real-time alerts (Discord / Telegram)
+
+The repo's GitHub Action sweeps every 6 hours and pings you the moment a **new** listing scores ≥ 6 (configurable). Dedup state (`state/alerts-state.json`) is committed back, so each listing only ever alerts once.
+
+Setup:
+1. **Discord**: Channel Settings → Integrations → Webhooks → New Webhook → copy URL → add repo secret `DISCORD_WEBHOOK_URL`
+2. **Telegram**: create a bot with @BotFather → add secrets `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` (message the bot once, then check `https://api.telegram.org/bot<TOKEN>/getUpdates` for your chat id)
+3. That's it — the workflow handles the rest. Test locally first:
+
+```bash
+node radar.mjs --json > feed.json
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/… node notify.mjs feed.json --dry-run
+```
+
 ## Daily automation
 
-Run it from cron / Task Scheduler, e.g. daily at 9am:
+The GitHub Action (`.github/workflows/sweep-and-publish.yml`) handles everything on schedule (every 6h): sweep → publish site → fire alerts. To run locally instead:
 
 ```
 0 9 * * * cd /path/to/radar && node radar.mjs --out digest-$(date +\%F).md
 ```
-
-On Windows, use Task Scheduler pointing at `node radar.mjs --out digest.md`, or `schtasks /create /tn "BountyRadar" /tr "node radar.mjs --out digest.md" /sc daily /st 09:00`.
 
 ## Interpreting the score (0–15)
 

@@ -1,3 +1,5 @@
 feed.json
 site/
 digest-*.md
+hook-test.log
+srv.log
