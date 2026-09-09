@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-label="Bounty Radar — verified open-source bounties, 28 live listings, $1,394 tracked">
+  <defs>
+    <radialGradient id="glow" cx="78%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#3fb950" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#0d1117" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sweep" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3fb950" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="#3fb950" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="frame"><rect width="1280" height="640" rx="0"/></clipPath>
+  </defs>
+
+  <g clip-path="url(#frame)">
+    <rect width="1280" height="640" fill="#0d1117"/>
+    <rect width="1280" height="640" fill="url(#glow)"/>
+
+    <!-- radar motif -->
+    <g>
+      <circle cx="1000" cy="320" r="60" fill="none" stroke="#30363d" stroke-width="1.5" opacity="0.9"/><circle cx="1000" cy="320" r="110" fill="none" stroke="#30363d" stroke-width="1.5" opacity="0.9"/><circle cx="1000" cy="320" r="160" fill="none" stroke="#30363d" stroke-width="1.5" opacity="0.9"/><circle cx="1000" cy="320" r="210" fill="none" stroke="#30363d" stroke-width="1.5" opacity="0.9"/>
+      <line x1="780" y1="320" x2="1220" y2="320" stroke="#30363d" stroke-width="1" opacity="0.55"/>
+      <line x1="1000" y1="100" x2="1000" y2="540" stroke="#30363d" stroke-width="1" opacity="0.55"/>
+      <path d="M 1000 320 L 1205 236 A 220 220 0 0 0 1220 320 Z" fill="url(#sweep)"/>
+      <line x1="1000" y1="320" x2="1205" y2="236" stroke="#3fb950" stroke-width="2" opacity="0.8"/>
+      
+  <circle cx="1128" cy="268" r="21" fill="#3fb950" opacity="0.12"/>
+  <circle cx="1128" cy="268" r="7" fill="#3fb950" opacity="0.95"/>
+      
+  <circle cx="1040" cy="416" r="18" fill="#d29922" opacity="0.12"/>
+  <circle cx="1040" cy="416" r="6" fill="#d29922" opacity="0.9"/>
+      
+  <circle cx="904" cy="350" r="18" fill="#58a6ff" opacity="0.12"/>
+  <circle cx="904" cy="350" r="6" fill="#58a6ff" opacity="0.9"/>
+      
+  <circle cx="948" cy="200" r="15" fill="#3fb950" opacity="0.12"/>
+  <circle cx="948" cy="200" r="5" fill="#3fb950" opacity="0.65"/>
+      
+  <circle cx="1150" cy="448" r="15" fill="#d29922" opacity="0.12"/>
+  <circle cx="1150" cy="448" r="5" fill="#d29922" opacity="0.6"/>
+      <circle cx="1000" cy="320" r="4" fill="#e6edf3"/>
+    </g>
+
+    <!-- left content -->
+    <text x="64" y="118" font-family="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif" font-size="14" font-weight="600" letter-spacing="4" fill="#3fb950">OPEN-SOURCE BOUNTY INTELLIGENCE</text>
+    <text x="60" y="212" font-family="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif" font-size="82" font-weight="800" fill="#e6edf3">Bounty <tspan fill="#3fb950">Radar</tspan></text>
+    <line x1="64" y1="248" x2="700" y2="248" stroke="#30363d" stroke-width="1"/>
+    <text x="64" y="292" font-family="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif" font-size="21" fill="#8b949e">Every “open bounty” verified before you spend a day on it:</text>
+    <text x="64" y="322" font-family="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif" font-size="21" fill="#8b949e">repo active · issue open · spam filtered — published as an</text>
+    <text x="64" y="352" font-family="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif" font-size="21" fill="#8b949e">agent-readable feed for humans <tspan fill="#e6edf3">and</tspan> coding agents.</text>
+
+    
+  <text x="64" y="500" font-family="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif" font-size="46" font-weight="700" fill="#e6edf3">28</text>
+  <text x="64" y="528" font-family="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif" font-size="13" letter-spacing="2.5" fill="#8b949e">LIVE LISTINGS</text>
+    
+  <text x="320" y="500" font-family="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif" font-size="46" font-weight="700" fill="#3fb950">$1,394</text>
+  <text x="320" y="528" font-family="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif" font-size="13" letter-spacing="2.5" fill="#8b949e">TRACKED PAYOUTS</text>
+    
+  <text x="576" y="500" font-family="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif" font-size="46" font-weight="700" fill="#d29922">18+</text>
+  <text x="576" y="528" font-family="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif" font-size="13" letter-spacing="2.5" fill="#8b949e">SCORED WINNABLE</text>
+
+    <g>
+    <rect x="64" y="560" width="99.8" height="34" rx="17" fill="#21262d" stroke="#30363d"/>
+    <text x="113.9" y="582" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif" font-size="14" fill="#58a6ff">JSON feed</text>
+  </g><g>
+    <rect x="190" y="560" width="50.599999999999994" height="34" rx="17" fill="#21262d" stroke="#30363d"/>
+    <text x="215.3" y="582" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif" font-size="14" fill="#58a6ff">RSS</text>
+  </g><g>
+    <rect x="268" y="560" width="140.79999999999998" height="34" rx="17" fill="#21262d" stroke="#30363d"/>
+    <text x="338.4" y="582" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif" font-size="14" fill="#58a6ff">MCP for agents</text>
+  </g>
+
+    <text x="64" y="624" font-family="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif" font-size="14" fill="#8b949e">ai-dev-2024.github.io/bounty-radar · sweeps 6 sources every 6h — Algora, Opire, GitHub labels</text>
+  </g>
+</svg>
