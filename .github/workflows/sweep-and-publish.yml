@@ -74,6 +74,40 @@ jobs:
           name: dashboard
           path: site/dashboard.png
 
+      # Stable, login-free share URLs: force-push ONLY the rendered charts to
+      # the gh-artifacts branch (orphan history — no bloat, always current).
+      # raw.githubusercontent.com serves it without any GitHub login.
+      # Best-effort: a push failure must never block publishing the site.
+      - name: Publish charts to gh-artifacts branch
+        if: hashFiles('site/momentum.*') != '' || hashFiles('site/dashboard.*') != ''
+        run: |
+          CHARTS="$(mktemp -d)"
+          cp site/momentum.svg site/momentum.png site/dashboard.svg site/dashboard.png "$CHARTS/" 2>/dev/null || true
+          if ! ls "$CHARTS"/* >/dev/null 2>&1; then
+            echo "No rendered charts found — skipping branch publish."
+            exit 0
+          fi
+          {
+            echo "# Shareable launch charts"
+            echo
+            echo "Rendered by CI on every sweep — always current, no history kept."
+            echo "Served login-free at:"
+            echo
+            echo "- https://raw.githubusercontent.com/ai-dev-2024/bounty-radar/gh-artifacts/dashboard.png"
+            echo "- https://raw.githubusercontent.com/ai-dev-2024/bounty-radar/gh-artifacts/momentum.png"
+            echo
+            echo "(Same files are also on Pages: ai-dev-2024.github.io/bounty-radar/<file>)"
+          } > "$CHARTS/README.md"
+          git -C "$CHARTS" init -q -b gh-artifacts
+          git -C "$CHARTS" add -A
+          git -C "$CHARTS" -c user.name="github-actions[bot]" -c user.email="github-actions[bot]@users.noreply.github.com" \
+            commit -qm "charts: publish rendered launch charts (run ${{ github.run_id }})"
+          if git -C "$CHARTS" push -q --force "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" gh-artifacts; then
+            echo "Published to gh-artifacts: $(ls "$CHARTS" | tr '\n' ' ')" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning::gh-artifacts push failed — charts still available as run artifacts and on Pages post-launch."
+          fi
+
       - name: Fire alerts for new high-score listings
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
