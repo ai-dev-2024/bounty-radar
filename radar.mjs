@@ -23,8 +23,8 @@
 
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { writeFileSync, readFileSync, mkdirSync } from "node:fs";
+import { join, dirname } from "node:path";
 
 const execFileAsync = promisify(execFile);
 
@@ -550,6 +550,31 @@ function renderMarkdown(bounties) {
 // Main
 // ---------------------------------------------------------------------------
 
+/** Stable id, matching worker/mcp-server convention. */
+const listingKey = (b) => (b.issue != null ? `${b.org}/${b.repo}#${b.issue}` : `${b.source}:${b.org}:${b.title}`);
+
+/**
+ * Merge this sweep's listings into the seen-map (state/listings-seen.json,
+ * committed back by CI). Gives every listing first_seen/last_seen so /v1/diff
+ * can eventually report per-listing changes and removals.
+ * ponytail: file grows ~50 entries/day; prune entries unseen >90d if it ever matters.
+ */
+function annotateFirstSeen(ranked) {
+  const SEEN_PATH = "state/listings-seen.json";
+  let seen = {};
+  try { seen = JSON.parse(readFileSync(SEEN_PATH, "utf8")); } catch { /* first run */ }
+  const now = new Date().toISOString();
+  for (const b of ranked) {
+    const k = listingKey(b);
+    if (!seen[k]) seen[k] = { first_seen: now };
+    seen[k].last_seen = now;
+    b.first_seen = seen[k].first_seen;
+    b.last_seen = now;
+  }
+  mkdirSync(dirname(SEEN_PATH), { recursive: true });
+  writeFileSync(SEEN_PATH, JSON.stringify(seen));
+}
+
 async function main() {
   if (FLAG_JSON) console.error("Sweeping sources…");
 
@@ -578,6 +603,8 @@ async function main() {
   const ranked = verified
     .map((b) => ({ ...b, score: scoreBounty(b) }))
     .sort((a, b) => b.score - a.score || (b.amountUsd ?? 0) - (a.amountUsd ?? 0));
+
+  annotateFirstSeen(ranked);
 
   const markdown = renderMarkdown(ranked);
 

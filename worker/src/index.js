@@ -251,11 +251,11 @@ async function stats(env) {
   }, {});
 }
 
-// /v1/diff — cheap agent polling: what changed since a previous sweep.
-// "since" = feed.generated_at from a prior response. Returns only listings
-// that appeared after that timestamp. Deleted/closed listings can't be seen
-// after a feed refresh, so agents diff client-side with listing_ids for exact
-// removals; this endpoint answers "anything new worth looking at?" in one call.
+// /v1/diff — cheap agent polling with per-listing granularity.
+// "since" = meta.generated_at from a prior response. The worker stores each
+// sweep's listings in KV; against the stored snapshot it reports added (new
+// ids), removed (ids gone), and changed (amount/score/escrow/PR/claim moves).
+// Unknown or evicted 'since' ⇒ graceful fallback: everything reports as added.
 async function diff(request, env) {
   const p = Object.fromEntries(new URL(request.url).searchParams);
   const feed = await getFeed(env);
@@ -263,20 +263,48 @@ async function diff(request, env) {
   if (p.since && (Number.isNaN(since.getTime()) || since.getTime() > Date.now())) {
     return json({ error: "invalid 'since' (expect ISO timestamp from meta.generated_at)" }, { status: 400, request });
   }
-  const generatedAt = new Date(feed.generatedAt);
-  const isNew = !since || generatedAt > since; // new sweep ⇒ treat all as new for this caller
-  const items = isNew ? (feed.bounties ?? []) : [];
-  const summaries = items.map(summarize);
+
+  const current = (feed.bounties ?? []).map(summarize);
+  const currentById = new Map(current.map((b) => [b.id, b]));
+
+  let prevById = new Map();
+  let snapshotFound = false;
+  if (since && env.SNAPSHOTS) {
+    const prev = await env.SNAPSHOTS.get(`sweep:${since.toISOString()}`, "json");
+    if (prev) {
+      snapshotFound = true;
+      prevById = new Map(prev.map((b) => [b.id, b]));
+    }
+  }
+
+  const FIELDS = ["amount_usd", "score", "escrow", "open_competing_prs", "claim_count"];
+  const added = [];
+  const changed = [];
+  for (const [id, b] of currentById) {
+    const prev = prevById.get(id);
+    if (!prev) { added.push(b); continue; }
+    const changes = {};
+    for (const f of FIELDS) if (prev[f] !== b[f]) changes[f] = [prev[f] ?? null, b[f] ?? null];
+    if (Object.keys(changes).length) changed.push({ ...b, _changes: changes });
+  }
+  const removed = [...prevById.keys()].filter((id) => !currentById.has(id));
+
+  // store this sweep for future diffs (30d TTL covers any realistic 'since')
+  if (env.SNAPSHOTS) {
+    await env.SNAPSHOTS.put(`sweep:${feed.generatedAt}`, JSON.stringify(current), { expirationTtl: 30 * 86400 });
+  }
+
   return json(
     {
-      data: summaries,
+      data: { added, changed, removed },
       meta: {
         ...meta(feed),
         since: since ? since.toISOString() : null,
-        sweep_newer_than_since: isNew,
-        count: summaries.length,
-        // ponytail: no per-listing first_seen timestamps yet — sweep granularity only.
-        // Add first_seen in radar.mjs output if per-listing diffs become necessary.
+        snapshot_found: snapshotFound,
+        counts: { added: added.length, changed: changed.length, removed: removed.length },
+        note: snapshotFound
+          ? "per-listing diff against stored sweep"
+          : "no stored snapshot for 'since' — all current listings reported as added",
         next_poll_hint: "pass meta.generated_at as ?since= next time",
       },
     },
