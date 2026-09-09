@@ -8,6 +8,8 @@ on:
   schedule:
     - cron: "*/10 * * * *"
   workflow_dispatch:
+  repository_dispatch:
+    types: [hn-followup]
 
 permissions:
   contents: write
@@ -35,12 +37,14 @@ jobs:
           HN_ITEM_ID: ${{ vars.HN_ITEM_ID }}
           GH_AUTHOR: ${{ github.repository_owner }}
           GH_TOKEN: ${{ github.token }}
+          GH_EVENT_NAME: ${{ github.event_name }}
+          FOLLOWUP: ${{ github.event_name == 'repository_dispatch' && '1' || '0' }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: node hn-monitor.mjs --state state/hn-monitor.json
 
-      - name: Commit monitor state (dedup across runs)
+      - name: Commit monitor state
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
