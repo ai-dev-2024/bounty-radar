@@ -168,6 +168,20 @@ async function poll() {
     }
     seen.comments = comments.map((c) => c.id);
     seen.lastPoints = pts;
+
+    // Launch-momentum log: one sample per minute (latest wins within the minute),
+    // capped at 500 samples (~2 days at 10-min ticks, ~50 days at 6h). Committed
+    // with the state file; build-site.mjs renders it as the points-over-time chart.
+    const minute = Math.floor(Date.now() / 60_000) * 60_000;
+    seen.momentum = seen.momentum ?? [];
+    const lastSample = seen.momentum[seen.momentum.length - 1];
+    if (lastSample && lastSample.t === minute) {
+      lastSample.pts = pts;
+      lastSample.comments = comments.length;
+    } else {
+      seen.momentum.push({ t: minute, pts, comments: comments.length });
+      if (seen.momentum.length > 500) seen.momentum = seen.momentum.slice(-500);
+    }
   }
 
   // --- GitHub PR part ---
