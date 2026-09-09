@@ -49,7 +49,12 @@ HTML. So besides the board there's:
 - A queryable API (free, no key): https://bounty-radar-api.ai-dev-2024.workers.dev
   e.g. /v1/listings?escrow_only=1&sort=amount  ·  /v1/listings?type=job
   Agents poll /v1/diff?since=<last timestamp> and get structured
-  added/changed/removed — a cheap poll, no re-scanning:
+  added/changed/removed — a cheap poll, no re-scanning.
+- And yes, this thread is instrumenting itself: GET /v1/launch returns this
+  post's points/comments/stars over time plus our API traffic, as JSON.
+  The board charts the same data live at the top of the page, and a CI job
+  renders it into a shareable dashboard image (dashboard.svg). Watch the
+  thread chart itself: https://ai-dev-2024.github.io/bounty-radar/
 - An MCP server so Claude Code / Cursor etc. can ask natively:
   https://github.com/ai-dev-2024/bounty-radar#use-it-from-any-agent-mcp-server
 
@@ -78,6 +83,7 @@ Repo: https://github.com/ai-dev-2024/bounty-radar
 - **Likely question 1:** "How is this different from Algora's own listing page?" → *Algora only lists Algora; we cross-check repo liveness and filter dead/expired listings across platforms — which their pages don't (we found their org pages listing deleted repos).*
 - **Likely question 2:** "Why not just a GitHub label search?" → *Raw searches are full of deleted repos and bait farms; that's the actual problem. Show them the research: 13 verified out of ~90 raw hits.*
 - **Likely question 3:** "Does the agent thing actually work?" → *Link the PHPWord PR; the pipeline picked, fixed, and submitted it end-to-end.*
+- **Likely question 4:** "Why are you tracking your own thread?" → *It demos the whole thesis in one endpoint: agent-readable data about the launch itself (/v1/launch), the same samples rendered as the board's chart, and zero extra infrastructure — the monitor's committed state is the only source. Feel free to point out they can curl it live.*
 - If someone from tscircuit/Algora shows up: be warm, no shade — their data powers the radar.
 - **Don't** mention monetization plans unless asked directly ("Stage 2" pricing exists in the repo docs — fine to link if asked).
 
@@ -89,13 +95,16 @@ The `hn-monitor` workflow watches your thread every 10 minutes and pings Discord
 2. **Add it** — go to https://github.com/ai-dev-2024/bounty-radar/settings/variables/actions → **New repository variable** → Name: `HN_ITEM_ID`, Value: the number → **Add variable**.
 3. **Done** — the next 10-minute tick starts watching. (Optional smoke test: Repo → Actions → "hn-monitor" → Run workflow → check it went green and Discord got a "nothing new" or seed digest.)
 
+That one variable arms everything at once: the 10-min comment monitor, the hourly launch digest (pts/comments/stars/API-reqs to Discord for ~36h), the board's momentum chart, the footer "Discuss on HN" link, and the `dashboard.svg` shareable image — each appears/starts on the next publish.
+
 The PR-watching half of the digest is already live — no setup needed.
 
 ## Pre-flight checklist
 
 - [ ] Site loads on mobile (HN traffic is ~half mobile)
 - [ ] `bounties.json` fresh (cron at 00:00/06:00/12:00/18:00 UTC — check `meta.generated_at`)
-- [ ] API 200s: `/v1/stats`, `/v1/listings?escrow_only=1`
+- [ ] API 200s: `/v1/stats`, `/v1/listings?escrow_only=1`, `/v1/launch`
 - [ ] PHPWord PR #2937 still open/clean — it's the proof link
 - [ ] Discord webhook secret configured? (alert demo works when traffic finds a fresh listing)
+- [ ] After setting `HN_ITEM_ID`: next sweep adds the momentum chart to the board + `hn-momentum.json` gets its first samples; the sweep after that publishes `dashboard.svg` (that's the "thread charting itself" link in your first comment — verify it before posting, or soften the line to "will chart within the hour")
 - [ ] This file (`docs/SHOW_HN.md`) **removed from the repo or kept?** — harmless either way; keeping it is fine and honest
