@@ -8,7 +8,8 @@
     "radar": "node radar.mjs",
     "radar:json": "node radar.mjs --json",
     "radar:digest": "node radar.mjs --out digest.md",
-    "preflight": "node preflight.mjs"
+    "preflight": "node preflight.mjs",
+    "build:banner": "node build-social-banner.mjs"
   },
   "engines": {
     "node": ">=20"
