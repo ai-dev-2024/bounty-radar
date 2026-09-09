@@ -173,6 +173,18 @@ const html = `<!doctype html>
   h2 a:hover { color: #58a6ff; text-decoration: underline; }
   .desc { color: #8b949e; font-size: .85rem; margin: 4px 0; }
   .meta { color: #8b949e; font-size: .78rem; justify-content: space-between; }
+  details.how { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 0; margin: 0 0 20px; }
+  details.how summary { cursor: pointer; padding: 12px 16px; font-weight: 600; color: #58a6ff; list-style: none; }
+  details.how summary::before { content: "▸ "; }
+  details.how[open] summary::before { content: "▾ "; }
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; padding: 4px 16px 16px; }
+  .step { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 12px; font-size: .85rem; }
+  .step h3 { margin: 8px 0 4px; font-size: .95rem; color: #e6edf3; }
+  .step p { margin: 0; color: #8b949e; }
+  .step code { background: #21262d; border-radius: 4px; padding: 1px 5px; font-size: .8rem; color: #79c0ff; }
+  .step a { color: #58a6ff; }
+  .step .n { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #1f6feb; color: #fff; font-weight: 700; font-size: .8rem; }
+  .step.agent { border-color: #1f6feb; }
   .empty { color: #8b949e; padding: 40px 0; text-align: center; }
   footer { margin-top: 40px; color: #8b949e; font-size: .8rem; border-top: 1px solid #30363d; padding-top: 16px; }
   footer a { color: #58a6ff; }
@@ -193,6 +205,16 @@ const html = `<!doctype html>
     <span><a href="feed.xml">📡 RSS</a></span>
     <span><a href="bounties.json">{ } JSON for agents</a></span>
   </div>
+  <details class="how" open>
+    <summary>First time here? How to pick a bounty and start — 60-second walkthrough</summary>
+    <div class="steps">
+      <div class="step"><span class="n">1</span><h3>Read the card</h3><p><b style="color:#d2a8ff">★ score</b> ranks opportunity (amount + freshness + low competition). <b style="color:#3fb950">escrow ✓</b> means a platform (Algora/Opire) holds the money. <b style="color:#d29922">escrow ?</b> means verify in the issue before investing time. Fewer open PRs = less competition.</p></div>
+      <div class="step"><span class="n">2</span><h3>Open the issue</h3><p>Click a listing title to open its GitHub issue. Skim the discussion: is someone already deep into a PR? Is the maintainer responsive? Read the repo's <code>CONTRIBUTING.md</code>.</p></div>
+      <div class="step"><span class="n">3</span><h3>Claim it politely</h3><p>Comment <code>/claim</code> or <code>/attempt</code> (platform repos) or “I'd like to work on this” — then deliver fast. Many repos only review PRs from whoever claimed first.</p></div>
+      <div class="step"><span class="n">4</span><h3>Get paid</h3><p>Open a clean PR referencing the issue. On merge, escrow-backed platforms pay you out automatically. For <b style="color:#d29922">escrow ?</b> listings, confirm payment terms with the maintainer <i>before</i> starting.</p></div>
+      <div class="step agent"><span class="n">🤖</span><h3>Are you an agent?</h3><p>Skip the HTML: poll <a href="bounties.json">bounties.json</a> directly, or run the <a href="https://github.com/ai-dev-2024/bounty-radar#use-it-from-any-agent-mcp-server">MCP server</a> for native tools (<code>search_bounties</code>, <code>whats_new</code>, <code>get_stats</code>).</p></div>
+    </div>
+  </details>
   <div class="filters" id="filters"></div>
   <div class="grid" id="grid">
 ${bounties.map(cardHtml).join("\n")}
