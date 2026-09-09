@@ -172,6 +172,21 @@ async function handleStripeWebhook(env, request) {
   return json({ received: true, key, plan }, { request });
 }
 let cache = { data: null, at: 0, inflight: null };
+let momentumCache = { data: null, at: 0 };
+
+async function getMomentum(env) {
+  const ttl = Number(env.CACHE_TTL_MS ?? 600000);
+  if (momentumCache.data && Date.now() - momentumCache.at < ttl) return momentumCache.data;
+  try {
+    const res = await fetch(`${env.SITE_URL}hn-momentum.json`, { headers: { "User-Agent": "bounty-radar-api/1.0" } });
+    if (!res.ok) throw new Error(`momentum fetch ${res.status}`);
+    const data = await res.json();
+    momentumCache = { data, at: Date.now() };
+    return data;
+  } catch {
+    return momentumCache.data ?? { samples: [] }; // chart may not exist yet pre-launch
+  }
+}
 
 async function getFeed(env) {
   const ttl = Number(env.CACHE_TTL_MS ?? 600000);
@@ -312,6 +327,64 @@ async function diff(request, env) {
   );
 }
 
+// --- launch dashboard --------------------------------------------------------
+// API request counter for /v1/launch. KV free tier allows only 1k writes/day, so
+// each isolate buffers counts in memory and flushes every 20 requests or 60s.
+// Isolate races lose a few counts at the margins — fine for telemetry (this is a
+// dashboard, not billing). ponytail: switch to Durable Objects if it ever needs
+// to be exact.
+let launchBuf = { day: today(), n: 0, lastFlush: 0 };
+
+async function flushLaunch(env) {
+  if (!launchBuf.n || !env.KEYS) return;
+  const day = launchBuf.day;
+  const n = launchBuf.n;
+  launchBuf = { day: today(), n: 0, lastFlush: Date.now() };
+  const k = `launch:api:${day}`;
+  const prev = Number((await env.KEYS.get(k)) ?? 0);
+  await env.KEYS.put(k, String(prev + n), { expirationTtl: 31 * 86400 });
+}
+
+function countRequest(env, ctx) {
+  if (launchBuf.day !== today()) launchBuf = { day: today(), n: 0, lastFlush: launchBuf.lastFlush };
+  launchBuf.n++;
+  // Flush every 20 requests or 60s. If an isolate is evicted before flushing,
+  // those counts are lost — accepted, this is telemetry not billing.
+  if (launchBuf.n >= 20 || Date.now() - launchBuf.lastFlush > 60_000) {
+    ctx ? ctx.waitUntil(flushLaunch(env)) : flushLaunch(env);
+  }
+}
+
+async function launch(request, env) {
+  const [momentum, apiDays] = await Promise.all([
+    getMomentum(env),
+    (async () => {
+      const byDay = {};
+      if (env.KEYS) {
+        const list = await env.KEYS.list({ prefix: "launch:api:" });
+        for (const k of list.keys) byDay[k.name.slice("launch:api:".length)] = Number((await env.KEYS.get(k.name)) ?? 0);
+      }
+      return byDay;
+    })(),
+  ]);
+  const samples = momentum.samples ?? [];
+  const last = samples[samples.length - 1] ?? null;
+  const total = Object.values(apiDays).reduce((s, n) => s + n, 0);
+  return json(
+    {
+      data: {
+        hn: {
+          latest: last ? { pts: last.pts, comments: last.comments, stars: last.stars ?? null } : null,
+          samples,
+        },
+        api: { requests_by_day: apiDays, total_tracked: total, note: "buffered counters — approximate (±few requests per isolate)" },
+      },
+      meta: { ...meta((await getFeed(env))), sample_count: samples.length },
+    },
+    { request },
+  );
+}
+
 const OPENAPI = {
   openapi: "3.0.3",
   info: { title: "Bounty Radar API", version: "1.0.0",
@@ -340,6 +413,7 @@ const OPENAPI = {
         description: "meta.generated_at from your previous call. Omit on first call." }],
       responses: { "200": { description: "Listings newer than 'since' (empty if your last poll was after the latest sweep)" } } } },
     "/v1/stats": { get: { summary: "Market pulse", responses: { "200": { description: "OK" } } } },
+    "/v1/launch": { get: { summary: "Launch dashboard: HN momentum + API usage", responses: { "200": { description: "Points/comments/stars samples + per-day API request counts" } } } },
   },
 };
 
@@ -352,8 +426,9 @@ export default {
       // Un-metered endpoints (marketing + spec): no quota.
       if (request.method === "POST" && pathname === "/v1/keys") return await handleCreateKey(env, request);
       if (pathname === "/openapi.json") return json(OPENAPI, { request });
-      if (pathname === "/") return json({ name: "bounty-radar-api", version: "2.0.0", docs: "/openapi.json",
-        endpoints: ["/v1/listings", "/v1/listings/{id}", "/v1/diff", "/v1/sources", "/v1/stats", "/v1/keys (POST)", "/v1/keys/me"],
+      if (pathname === "/v1/launch") return await launch(request, env); // public: the launch dashboard
+      if (pathname === "/") return json({ name: "bounty-radar-api", version: "2.1.0", docs: "/openapi.json",
+        endpoints: ["/v1/listings", "/v1/listings/{id}", "/v1/diff", "/v1/sources", "/v1/stats", "/v1/launch", "/v1/keys (POST)", "/v1/keys/me"],
         auth: "Authorization: Bearer brk_… (optional; anonymous = 100 req/day per IP, free key = 1000/day)" }, { request });
 
       // Everything below consumes quota.

@@ -33,6 +33,7 @@ const flagVal = (f) => { const i = args.indexOf(`--${f}`); return i !== -1 ? arg
 
 const ITEM_ID = process.env.HN_ITEM_ID ?? flagVal("item");
 const GH_AUTHOR = process.env.GH_AUTHOR ?? "ai-dev-2024";
+const DASH_REPO = process.env.GH_DASHBOARD_REPO ?? process.env.GITHUB_REPOSITORY ?? "ai-dev-2024/bounty-radar";
 const STATE_PATH = flagVal("state") ?? "state/hn-monitor.json";
 const DRY = hasFlag("dry-run");
 const LOOP = hasFlag("loop");
@@ -196,6 +197,18 @@ async function poll() {
       }
     } catch (e) {
       console.error("[gh] skipped:", e.message);
+    }
+    // Launch-dashboard: sample the dashboard repo's star count into the latest
+    // momentum sample (series starts logging once HN_ITEM_ID is set).
+    try {
+      const { stdout } = await execFileAsync("gh", ["api", `repos/${DASH_REPO}`, "--jq", ".stargazers_count | tostring"], { timeout: 30000 });
+      const stars = Number(stdout.trim());
+      const lastSample = seen.momentum?.[seen.momentum.length - 1];
+      if (lastSample) lastSample.stars = stars;
+      seen.lastStars = stars;
+      console.log(`[gh] ${DASH_REPO}: ${stars} stars`);
+    } catch (e) {
+      console.error("[gh] stars fetch failed:", e.message);
     }
   }
 
