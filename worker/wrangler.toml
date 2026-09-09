@@ -1,0 +1,7 @@
+name = "bounty-radar-api"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+[vars]
+FEED_URL = "https://ai-dev-2024.github.io/bounty-radar/bounties.json"
+CACHE_TTL_MS = "600000"
