@@ -1,0 +1,66 @@
+name: launch-digest
+
+# Hourly launch-day digest to Discord while the Show HN thread is fresh
+# (<36h old). After that, runs are silent no-ops — safe to leave enabled.
+# Also triggered by repository_dispatch from sweep-and-publish (guaranteed
+# coverage if the hourly cron ticks lag, which GitHub schedules often do).
+
+on:
+  schedule:
+    - cron: "15 * * * *" # :15 past every hour (off the top-of-hour rush)
+  workflow_dispatch:
+  repository_dispatch:
+    types: [launch-digest]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: launch-digest
+  cancel-in-progress: true
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Configure gh auth
+        run: echo "${{ github.token }}" | gh auth login --with-token
+
+      - name: Send hourly launch digest
+        env:
+          HN_ITEM_ID: ${{ vars.HN_ITEM_ID }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          GH_TOKEN: ${{ github.token }}
+        run: node launch-digest.mjs --state state/launch-digest.json
+
+      # Race-safe commit (same pattern as the other workflows): fetch, rebase,
+      # retry. A lost state commit just means one digest's deltas are off.
+      - name: Commit digest state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          [ -f state/launch-digest.json ] || { echo "No digest state yet."; exit 0; }
+          git add state/launch-digest.json
+          if git diff --cached --quiet; then
+            echo "No state change."
+            exit 0
+          fi
+          git commit -m "chore: launch digest state"
+          ok=0
+          for i in 1 2 3; do
+            if git fetch origin main && git rebase origin/main && git push origin HEAD:main; then
+              ok=1; break
+            fi
+            echo "state-push attempt $i failed — rebasing on latest main and retrying…"
+            git rebase --abort 2>/dev/null || true
+            sleep 10
+          done
+          [ "$ok" = "1" ] || { echo "::warning::Could not push digest state; next hour's deltas may repeat."; }

@@ -117,11 +117,13 @@ jobs:
         with:
           path: site
 
-      # Guaranteed monitor poll after every publish — cron ticks for hn-monitor are
-      # best-effort on GitHub, but this dispatch always fires when the feed changes.
-      - name: Trigger follow-up monitor poll
+      # Guaranteed monitor poll + launch digest after every publish — cron ticks
+      # are best-effort on GitHub, but these dispatches always fire on feed changes.
+      - name: Trigger follow-up monitor poll + launch digest
         if: success()
-        run: gh api repos/${{ github.repository }}/dispatches -f event_type=hn-followup
+        run: |
+          gh api repos/${{ github.repository }}/dispatches -f event_type=hn-followup
+          gh api repos/${{ github.repository }}/dispatches -f event_type=launch-digest
 
   deploy:
     needs: build
