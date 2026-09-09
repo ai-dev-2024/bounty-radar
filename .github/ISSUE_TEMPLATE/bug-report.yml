@@ -1,0 +1,40 @@
+name: 🐛 Bug report
+description: The radar, site, API or MCP server itself is broken
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part?
+      options:
+        - Sweep / verification (radar.mjs)
+        - Website (index.html / RSS / JSON)
+        - API (Cloudflare Worker)
+        - MCP server
+        - Alerts / digest / monitor
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you expected vs what you got.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Run `node radar.mjs --json`
+        2. ...
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      description: Node version, OS — or "CI" / "production" if not local
+    validations:
+      required: false

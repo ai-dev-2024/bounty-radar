@@ -1,0 +1,30 @@
+name: ✨ Suggest a source or feature
+description: A bounty source we should sweep, or an improvement to the feed/tooling
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of idea?
+      options:
+        - New bounty source (a platform, org, or label we don't sweep)
+        - Feed metadata maintainers/agents need
+        - Verification improvement
+        - Site/API/UX improvement
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+      description: For new sources — a URL to the listing page and what a listing looks like.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it matters
+      description: Who uses this and what gets better.
+    validations:
+      required: false

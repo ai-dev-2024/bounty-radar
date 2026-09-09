@@ -1,0 +1,37 @@
+name: 📋 Report bad data
+description: A listing in the feed is wrong — dead repo, wrong amount, spam, closed issue still showing
+labels: ["bad-data"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Wrong data is the worst bug this project can have — these reports get priority.
+        Please include the listing's URL (the GitHub issue or the board card).
+  - type: input
+    id: listing
+    attributes:
+      label: Listing URL
+      description: The GitHub issue URL, or the board card link
+    validations:
+      required: true
+  - type: dropdown
+    id: problem
+    attributes:
+      label: What's wrong?
+      options:
+        - Repo is dead / deleted
+        - Repo inactive (>60d)
+        - Issue is closed but still listed
+        - Wrong amount
+        - Spam / bait repo
+        - Duplicate listing
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: What did you see? Screenshots of the source page help a lot.
+    validations:
+      required: true
