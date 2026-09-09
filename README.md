@@ -8,6 +8,7 @@ A daily-verified feed of real, payable open-source work — bounties, jobs, chal
 [![API](https://img.shields.io/badge/API-live%20on%20Cloudflare%20Workers-F38020?logo=cloudflare&logoColor=white)](https://bounty-radar-api.ai-dev-2024.workers.dev/v1/stats)
 [![RSS](https://img.shields.io/badge/RSS-feed.xml-orange?logo=rss&logoColor=white)](https://ai-dev-2024.github.io/bounty-radar/feed.xml)
 ![zero deps](https://img.shields.io/badge/dependencies-0-success)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![sources](https://img.shields.io/badge/sources-Algora%20·%20Opire%20·%20GitHub-blue)
 
 ![Bounty Radar live board](docs/screenshot.png)
@@ -110,7 +111,7 @@ Node 20+, `gh` authed. Zero npm dependencies.
 
 ## Show HN launch
 
-Kit: [`docs/SHOW_HN.md`](docs/SHOW_HN.md) (title, first comment, pre-flight) · [`docs/HN_REPLIES.md`](docs/HN_REPLIES.md) (reply templates). Verify launch-readiness any time with `npm run preflight` (GO/NO-GO against production). After you submit:
+Kit: [`docs/SHOW_HN.md`](docs/SHOW_HN.md) (title, first comment, pre-flight) · [`docs/HN_REPLIES.md`](docs/HN_REPLIES.md) (reply templates) · [`docs/CROSS_POST.md`](docs/CROSS_POST.md) (r/opensource + Algora Discord — post after HN). Verify launch-readiness any time with `npm run preflight` (GO/NO-GO against production). After you submit:
 
 1. Copy the item id from your post URL (`news.ycombinator.com/item?id=XXXXXXXX`)
 2. Replace `HN_ITEM_ID` in the link above with that number
