@@ -40,6 +40,20 @@ curl -H "Authorization: Bearer brk_…" \
 
 Paid tiers: create a Stripe Payment Link with `client_reference_id = <your key>` and `metadata[plan] = agent|team`, point its webhook at `POST /v1/webhooks/stripe` — checkout flips the key's plan automatically (`STRIPE_SECRET` env + KV). Details in `worker/src/index.js`.
 
+## Use it from any agent (MCP server)
+
+`mcp-server.mjs` is a zero-dependency MCP (Model Context Protocol) server — Claude Code, Freebuff, Cursor, etc. can natively ask what's new and winnable.
+
+Tools: `search_bounties` (`min_score`, `min_amount`, `escrow_only`, `q`, …) · `get_listing` · `whats_new` · `get_stats`.
+
+```json
+{ "mcpServers": { "bounty-radar": {
+    "command": "node",
+    "args": ["/path/to/mcp-server.mjs"] } } }
+```
+
+Or skip MCP: `fetch("https://ai-dev-2024.github.io/bounty-radar/bounties.json")`, or use the queryable API above (`/v1/diff?since=…` for change-only polling).
+
 ## How it works (zero servers)
 
 ```
