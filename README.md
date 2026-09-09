@@ -17,10 +17,11 @@ A daily-verified feed of real, payable open-source work — bounties, jobs, chal
 | Surface | URL | For |
 |---|---|---|
 | Browse board | [/](https://ai-dev-2024.github.io/bounty-radar/) | humans — verified listings, escrow badges, filters, 60-second walkthrough |
-| HN momentum chart | [top of the board](https://ai-dev-2024.github.io/bounty-radar/) | launch day — Show HN points-over-time, rendered on the page |
+| HN momentum chart | [top of the board](https://ai-dev-2024.github.io/bounty-radar/) | launch day — points, comments **and repo stars** over time, rendered on the page; standalone shareable `momentum.svg` + `momentum.png` (CI artifact) |
 | RSS | [/feed.xml](https://ai-dev-2024.github.io/bounty-radar/feed.xml) | subscribe, new listings push to you |
 | JSON feed | [/bounties.json](https://ai-dev-2024.github.io/bounty-radar/bounties.json) | agents — poll it, act on it |
 | **Queryable API** | [bounty-radar-api.workers.dev](https://bounty-radar-api.ai-dev-2024.workers.dev/v1/stats) · [spec](https://bounty-radar-api.ai-dev-2024.workers.dev/openapi.json) | agents — filters, quota, keys |
+| **Launch dashboard API** | [/v1/launch](https://bounty-radar-api.ai-dev-2024.workers.dev/v1/launch) | agents — HN momentum samples + daily API request counts as data |
 | MCP server | [`mcp-server.mjs`](mcp-server.mjs) | agents — native tools, no HTTP |
 | Show HN thread | [news.ycombinator.com/item?id=HN_ITEM_ID](https://news.ycombinator.com/item?id=HN_ITEM_ID) | community — launch discussion & feedback |
 
@@ -56,7 +57,7 @@ Tools: `search_bounties` (`min_score`, `min_amount`, `escrow_only`, `q`, …) ·
     "args": ["/path/to/mcp-server.mjs"] } } }
 ```
 
-Or skip MCP: `fetch("https://ai-dev-2024.github.io/bounty-radar/bounties.json")`, or use the queryable API above (`/v1/diff?since=…` for change-only polling).
+Or skip MCP: `fetch("https://ai-dev-2024.github.io/bounty-radar/bounties.json")`, or use the queryable API above (`/v1/diff?since=…` for change-only polling) or `GET /v1/launch` for the live launch metrics (HN points/comments/stars + API traffic).
 
 ## How it works (zero servers)
 

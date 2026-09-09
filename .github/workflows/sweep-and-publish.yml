@@ -39,6 +39,25 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           HN_ITEM_ID: ${{ vars.HN_ITEM_ID }} # set after Show HN submission → footer link appears automatically
 
+      # Shareable chart: momentum.svg → PNG (2x density) for the HN first comment
+      # and social posts. Best-effort — a sharp install hiccup never blocks publish.
+      - name: Render momentum.png
+        run: |
+          if [ -f site/momentum.svg ]; then
+            npm install --no-save --no-fund --no-audit sharp@0.105.0 >/dev/null 2>&1 \
+              && node render-chart.mjs site/momentum.svg site/momentum.png \
+              || echo "::warning::momentum.png render skipped (sharp install/render failed)"
+          else
+            echo "No momentum.svg yet (chart appears once the HN thread exists)."
+          fi
+
+      - name: Upload momentum.png artifact
+        if: hashFiles('site/momentum.png') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: momentum
+          path: site/momentum.png
+
       - name: Fire alerts for new high-score listings
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}

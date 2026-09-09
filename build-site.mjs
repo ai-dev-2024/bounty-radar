@@ -148,9 +148,12 @@ function momentumChart(samples, w = 940, h = 120, pad = 8) {
   const t1 = samples[samples.length - 1].t;
   const maxPts = Math.max(...samples.map((s) => s.pts), 1);
   const maxC = Math.max(...samples.map((s) => s.comments), 1);
+  const hasStars = samples.some((s) => s.stars != null);
+  const maxS = Math.max(...samples.map((s) => s.stars ?? 0), 1);
   const x = (t) => pad + ((t - t0) / Math.max(t1 - t0, 60_000)) * (w - 2 * pad);
   const y = (p) => h - pad - (p / maxPts) * (h - 2 * pad);
-  // comment bars (behind), points line, end dot
+  const y2 = (v) => h - pad - (v / maxS) * (h - 2 * pad);
+  // comment bars (behind), points line (green), stars line (amber), end dots
   const bars = samples.length <= 140
     ? samples.map((s) => {
         const bw = Math.max((w - 2 * pad) / samples.length - 1, 1);
@@ -159,9 +162,15 @@ function momentumChart(samples, w = 940, h = 120, pad = 8) {
       }).join("")
     : "";
   const line = `<polyline points="${samples.map((s) => `${x(s.t).toFixed(1)},${y(s.pts).toFixed(1)}`).join(" ")}" fill="none" stroke="#3fb950" stroke-width="2" stroke-linejoin="round"/>`;
+  const starsLine = hasStars
+    ? `<polyline points="${samples.filter((s) => s.stars != null).map((s) => `${x(s.t).toFixed(1)},${y2(s.stars).toFixed(1)}`).join(" ")}" fill="none" stroke="#d29922" stroke-width="2" stroke-linejoin="round"/>`
+    : "";
   const last = samples[samples.length - 1];
-  const dot = `<circle cx="${x(last.t).toFixed(1)}" cy="${y(last.pts).toFixed(1)}" r="3" fill="#3fb950"/>`;
-  return bars + line + dot;
+  const lastStar = [...samples].reverse().find((s) => s.stars != null);
+  const dots =
+    `<circle cx="${x(last.t).toFixed(1)}" cy="${y(last.pts).toFixed(1)}" r="3" fill="#3fb950"/>` +
+    (lastStar ? `<circle cx="${x(lastStar.t).toFixed(1)}" cy="${y2(lastStar.stars).toFixed(1)}" r="3" fill="#d29922"/>` : "");
+  return bars + line + starsLine + dots;
 }
 
 const MOMENTUM_LAST = momentum[momentum.length - 1] ?? null;
@@ -244,7 +253,7 @@ const html = `<!doctype html>
     <span><a href="bounties.json">{ } JSON for agents</a></span>
   </div>
 ${MOMENTUM_CHART ? `  <div class="momentum">
-    <div class="momentum-head">🚀 Launch momentum — <b>${MOMENTUM_LAST.pts}</b> pts · <b>${MOMENTUM_LAST.comments}</b> comments on <a href="https://news.ycombinator.com/item?id=${process.env.HN_ITEM_ID ?? ""}">Hacker News</a> · <a href="hn-momentum.json">raw data</a></div>
+    <div class="momentum-head">🚀 Launch momentum — <b>${MOMENTUM_LAST.pts}</b> pts · <b>${MOMENTUM_LAST.comments}</b> comments${momentum.some((s) => s.stars != null) ? ` · <b style="color:#d29922">★ ${MOMENTUM_LAST.stars ?? "…"}</b> repo stars` : ""} · <span style="color:#3fb950">—</span> points <span style="color:#d29922">—</span> stars <span style="color:#58a6ff">▮</span> comments · <a href="https://news.ycombinator.com/item?id=${process.env.HN_ITEM_ID ?? ""}">HN thread</a> · <a href="momentum.svg">shareable chart</a> · <a href="hn-momentum.json">raw data</a></div>
     <svg viewBox="0 0 940 120" width="100%" height="120" role="img" aria-label="Hacker News thread points over time" preserveAspectRatio="none">
       ${MOMENTUM_CHART}
     </svg>
@@ -342,4 +351,19 @@ writeFileSync(join(outDir, "index.html"), html, "utf8");
 writeFileSync(join(outDir, "feed.xml"), rss, "utf8");
 writeFileSync(join(outDir, "bounties.json"), JSON.stringify({ ...data, site: SITE_URL }, null, 2), "utf8");
 writeFileSync(join(outDir, "hn-momentum.json"), JSON.stringify({ updatedAt: new Date().toISOString(), samples: momentum }, null, 2), "utf8");
+if (momentum.length >= 2) {
+  const inner = momentumChart(momentum);
+  const hnId = process.env.HN_ITEM_ID ?? "";
+  const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 150" width="940" height="150" role="img" aria-label="Bounty Radar HN launch momentum">
+  <rect width="940" height="150" fill="#0d1117"/>
+  <text x="12" y="22" font-family="system-ui,-apple-system,'Segoe UI',sans-serif" font-size="14" fill="#8b949e">Bounty Radar — launch momentum${hnId ? ` · news.ycombinator.com/item?id=${hnId}` : ""}</text>
+  <text x="928" y="22" text-anchor="end" font-family="system-ui,sans-serif" font-size="13" fill="#3fb950">${MOMENTUM_LAST.pts} pts</text>
+  <g transform="translate(0,30)">
+    ${inner}
+  </g>
+</svg>
+`;
+  writeFileSync(join(outDir, "momentum.svg"), svg, "utf8");
+}
 console.error(`[build-site] wrote ${outDir}/index.html, feed.xml, bounties.json (${bounties.length} listings)`);

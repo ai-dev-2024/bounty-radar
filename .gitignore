@@ -7,3 +7,4 @@ srv.log
 worker/.wrangler/
 worker/dev.log
 worker/dev2.log
+worker/dev-test.log
