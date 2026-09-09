@@ -24,6 +24,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history so the state-commit rebase never hits shallow-clone edge cases
 
       - uses: actions/setup-node@v4
         with:
@@ -44,16 +46,27 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: node hn-monitor.mjs --state state/hn-monitor.json
 
+      # Race-safe: retries with rebase if the sweep (or a human push) landed on main
+      # since checkout. Failing here is harmless to the product — next 10-min tick retries —
+      # but we exit 1 so a stuck push pattern is visible in run history.
       - name: Commit monitor state
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           [ -f state/hn-monitor.json ] || { echo "No state file yet (nothing polled)."; exit 0; }
           git add state/hn-monitor.json
-          if ! git diff --cached --quiet; then
-            git commit -m "chore: hn monitor state"
-            git pull --rebase origin main
-            git push
-          else
+          if git diff --cached --quiet; then
             echo "No state change."
+            exit 0
           fi
+          git commit -m "chore: hn monitor state"
+          ok=0
+          for i in 1 2 3; do
+            if git fetch origin main && git rebase origin/main && git push origin HEAD:main; then
+              ok=1; break
+            fi
+            echo "state-push attempt $i failed — rebasing on latest main and retrying…"
+            git rebase --abort 2>/dev/null || true
+            sleep 10
+          done
+          [ "$ok" = "1" ] || { echo "::warning::Could not push monitor state; next tick will retry."; exit 1; }
