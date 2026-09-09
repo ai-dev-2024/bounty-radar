@@ -7,7 +7,8 @@
   "scripts": {
     "radar": "node radar.mjs",
     "radar:json": "node radar.mjs --json",
-    "radar:digest": "node radar.mjs --out digest.md"
+    "radar:digest": "node radar.mjs --out digest.md",
+    "preflight": "node preflight.mjs"
   },
   "engines": {
     "node": ">=20"

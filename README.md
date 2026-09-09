@@ -110,7 +110,7 @@ Node 20+, `gh` authed. Zero npm dependencies.
 
 ## Show HN launch
 
-Kit: [`docs/SHOW_HN.md`](docs/SHOW_HN.md) (title, first comment, pre-flight) · [`docs/HN_REPLIES.md`](docs/HN_REPLIES.md) (reply templates). After you submit:
+Kit: [`docs/SHOW_HN.md`](docs/SHOW_HN.md) (title, first comment, pre-flight) · [`docs/HN_REPLIES.md`](docs/HN_REPLIES.md) (reply templates). Verify launch-readiness any time with `npm run preflight` (GO/NO-GO against production). After you submit:
 
 1. Copy the item id from your post URL (`news.ycombinator.com/item?id=XXXXXXXX`)
 2. Replace `HN_ITEM_ID` in the link above with that number
