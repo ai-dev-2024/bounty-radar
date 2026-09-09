@@ -44,6 +44,29 @@ node radar.mjs --max-age 14   # only bounties aged ≤ 14 days
 
 Requires: Node 20+, `gh` CLI authenticated (`gh auth login`).
 
+## Use it from any agent (MCP server)
+
+`mcp-server.mjs` is a zero-dependency MCP (Model Context Protocol) server. Any MCP-capable agent — Claude Code, Freebuff, Cursor, etc. — can natively ask what's new and winnable.
+
+Tools: `search_bounties` (filters: `min_score`, `min_amount`, `max_age_days`, `escrow_only`, `q`, …), `get_listing`, `whats_new`, `get_stats`.
+
+Config (Claude Code example):
+
+```json
+{
+  "mcpServers": {
+    "bounty-radar": {
+      "command": "node",
+      "args": ["/path/to/bounty-radar/mcp-server.mjs"]
+    }
+  }
+}
+```
+
+Point `BOUNTY_RADAR_FEED` at any compatible feed URL to run your own instance. Data comes from the live published feed (refreshed every 6h); pass a local `feed.json` path as argv[2] for offline use.
+
+Example agent flow: `get_stats` → `search_bounties {min_score: 7, escrow_only: true}` → `get_listing` → clone & work.
+
 ## Real-time alerts (Discord / Telegram)
 
 The repo's GitHub Action sweeps every 6 hours and pings you the moment a **new** listing scores ≥ 6 (configurable). Dedup state (`state/alerts-state.json`) is committed back, so each listing only ever alerts once.
