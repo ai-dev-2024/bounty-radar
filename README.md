@@ -17,6 +17,7 @@ A daily-verified feed of real, payable open-source work — bounties, jobs, chal
 | Surface | URL | For |
 |---|---|---|
 | Browse board | [/](https://ai-dev-2024.github.io/bounty-radar/) | humans — verified listings, escrow badges, filters, 60-second walkthrough |
+| HN momentum chart | [top of the board](https://ai-dev-2024.github.io/bounty-radar/) | launch day — Show HN points-over-time, rendered on the page |
 | RSS | [/feed.xml](https://ai-dev-2024.github.io/bounty-radar/feed.xml) | subscribe, new listings push to you |
 | JSON feed | [/bounties.json](https://ai-dev-2024.github.io/bounty-radar/bounties.json) | agents — poll it, act on it |
 | **Queryable API** | [bounty-radar-api.workers.dev](https://bounty-radar-api.ai-dev-2024.workers.dev/v1/stats) · [spec](https://bounty-radar-api.ai-dev-2024.workers.dev/openapi.json) | agents — filters, quota, keys |
@@ -98,6 +99,7 @@ Node 20+, `gh` authed. Zero npm dependencies.
 | `radar.mjs` | sweep + verify + score (0–15) |
 | `build-site.mjs` | HTML/RSS/JSON generator |
 | `mcp-server.mjs` | MCP tools over stdio |
+| `hn-monitor.mjs` | HN thread + PR watch; logs points-over-time samples to state |
 | `notify.mjs` | Discord/Telegram alerts w/ dedup |
 | `.github/workflows/sweep-and-publish.yml` | the whole pipeline on cron |
 | `docs/API_PLAN.md` | product plan for the API stage |

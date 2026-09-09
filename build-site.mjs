@@ -59,6 +59,13 @@ if (existsSync(feedPath) && isFresh(feedPath)) {
 const bounties = data.bounties ?? [];
 const generatedAt = data.generatedAt ?? new Date().toISOString();
 
+// HN launch momentum (optional): samples written by hn-monitor.mjs into its
+// committed state file. Missing/empty → the chart is simply omitted.
+let momentum = [];
+try {
+  momentum = JSON.parse(readFileSync(join(here, "state", "hn-monitor.json"), "utf8")).momentum ?? [];
+} catch { /* no monitor state yet */ }
+
 // ---------------------------------------------------------------------------
 // Data prep
 // ---------------------------------------------------------------------------
@@ -134,6 +141,32 @@ function cardHtml(b) {
 
 const VERIFIED_COUNT = bounties.filter((b) => b.issue != null).length;
 
+// --- HN launch-momentum chart (inline SVG, zero JS) -------------------------
+
+function momentumChart(samples, w = 940, h = 120, pad = 8) {
+  const t0 = samples[0].t;
+  const t1 = samples[samples.length - 1].t;
+  const maxPts = Math.max(...samples.map((s) => s.pts), 1);
+  const maxC = Math.max(...samples.map((s) => s.comments), 1);
+  const x = (t) => pad + ((t - t0) / Math.max(t1 - t0, 60_000)) * (w - 2 * pad);
+  const y = (p) => h - pad - (p / maxPts) * (h - 2 * pad);
+  // comment bars (behind), points line, end dot
+  const bars = samples.length <= 140
+    ? samples.map((s) => {
+        const bw = Math.max((w - 2 * pad) / samples.length - 1, 1);
+        const bh = (s.comments / maxC) * (h * 0.28);
+        return `<rect x="${(x(s.t) - bw / 2).toFixed(1)}" y="${(h - pad - bh).toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" fill="#1f6feb" opacity="0.45"/>`;
+      }).join("")
+    : "";
+  const line = `<polyline points="${samples.map((s) => `${x(s.t).toFixed(1)},${y(s.pts).toFixed(1)}`).join(" ")}" fill="none" stroke="#3fb950" stroke-width="2" stroke-linejoin="round"/>`;
+  const last = samples[samples.length - 1];
+  const dot = `<circle cx="${x(last.t).toFixed(1)}" cy="${y(last.pts).toFixed(1)}" r="3" fill="#3fb950"/>`;
+  return bars + line + dot;
+}
+
+const MOMENTUM_LAST = momentum[momentum.length - 1] ?? null;
+const MOMENTUM_CHART = momentum.length >= 2 ? momentumChart(momentum) : "";
+
 const html = `<!doctype html>
 <html lang="en">
 <head>
@@ -154,6 +187,11 @@ const html = `<!doctype html>
   .updated { color: #8b949e; font-size: .85rem; }
   .stats { display: flex; gap: 16px; flex-wrap: wrap; margin: 12px 0 20px; color: #8b949e; font-size: .9rem; }
   .stats b { color: #e6edf3; }
+  .momentum { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 10px 14px; margin: 0 0 20px; }
+  .momentum-head { color: #8b949e; font-size: .85rem; margin-bottom: 6px; }
+  .momentum-head b { color: #3fb950; }
+  .momentum-head a { color: #58a6ff; }
+  .momentum svg { display: block; }
   .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
   .filters button { background: #21262d; color: #e6edf3; border: 1px solid #30363d; border-radius: 999px; padding: 4px 14px; cursor: pointer; font-size: .85rem; }
   .filters button.active { background: #1f6feb; border-color: #1f6feb; }
@@ -205,6 +243,12 @@ const html = `<!doctype html>
     <span><a href="feed.xml">📡 RSS</a></span>
     <span><a href="bounties.json">{ } JSON for agents</a></span>
   </div>
+${MOMENTUM_CHART ? `  <div class="momentum">
+    <div class="momentum-head">🚀 Launch momentum — <b>${MOMENTUM_LAST.pts}</b> pts · <b>${MOMENTUM_LAST.comments}</b> comments on <a href="https://news.ycombinator.com/item?id=${process.env.HN_ITEM_ID ?? ""}">Hacker News</a> · <a href="hn-momentum.json">raw data</a></div>
+    <svg viewBox="0 0 940 120" width="100%" height="120" role="img" aria-label="Hacker News thread points over time" preserveAspectRatio="none">
+      ${MOMENTUM_CHART}
+    </svg>
+  </div>` : ""}
   <details class="how" open>
     <summary>First time here? How to pick a bounty and start — 60-second walkthrough</summary>
     <div class="steps">
@@ -297,4 +341,5 @@ mkdirSync(outDir, { recursive: true });
 writeFileSync(join(outDir, "index.html"), html, "utf8");
 writeFileSync(join(outDir, "feed.xml"), rss, "utf8");
 writeFileSync(join(outDir, "bounties.json"), JSON.stringify({ ...data, site: SITE_URL }, null, 2), "utf8");
+writeFileSync(join(outDir, "hn-momentum.json"), JSON.stringify({ updatedAt: new Date().toISOString(), samples: momentum }, null, 2), "utf8");
 console.error(`[build-site] wrote ${outDir}/index.html, feed.xml, bounties.json (${bounties.length} listings)`);
