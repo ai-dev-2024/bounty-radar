@@ -8,3 +8,7 @@ worker/.wrangler/
 worker/dev.log
 worker/dev2.log
 worker/dev-test.log
+
+worker/node_modules/
+node_modules/
+.wrangler/
